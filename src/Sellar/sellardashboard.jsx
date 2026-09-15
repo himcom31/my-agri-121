@@ -15,7 +15,7 @@ import SellerSidebar from "./SellerSidebar";
 import SellerProfile from "./Sellerprofile";
 import SellerAddProduct from "./SellerAddProduct";
 import SellerMyProducts from "./SellerMyProducts";
-import SellerEnquiries from "./SellerEnquiries";
+import SellerEnquiries from "./Sellerenquiries";
 import SellerMyWallet from "./SellerWallet";
 
 const API = import.meta.env.VITE_API_URL;
