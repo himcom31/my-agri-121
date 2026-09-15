@@ -714,6 +714,18 @@ function RegisterPage({ onSwitch }) {
               I have read and agree to the <strong>&nbsp;Terms & Conditions</strong>, including the one-time platform charge and permanent block policy for false information
             </label>
           </Field>
+
+          <Field error={errors.commissionAccepted}>
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 14, color: "#374151" }}>
+              <input
+                type="checkbox"
+                checked={form.commissionAccepted}
+                onChange={set("commissionAccepted")}
+                style={{ marginTop: 2, width: 16, height: 16, accentColor: "#3a7d1e" }}
+              />
+              I understand and accept the <strong>&nbsp;commission structure</strong> of Maharashtra Bazaar
+            </label>
+          </Field>
         </>
       );
       case 6: return (
