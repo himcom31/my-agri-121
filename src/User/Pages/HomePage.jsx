@@ -811,7 +811,7 @@ const StatsBar = () => {
 
   const stats = [
     { emoji: "👥", stat: "50K+", label: "Happy Customers", color: "#22c55e" },
-    { emoji: "⚡", stat: "30 min", label: "Fast Delivery", color: "#f59e0b" },
+    { emoji: "⚡", stat: "24 × 7  open", label: "Trusted Platform", color: "#f59e0b" },
     { emoji: "🔒", stat: "100%", label: "Secure Payments", color: "#3b82f6" },
   ];
 
