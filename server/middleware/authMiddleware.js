@@ -160,5 +160,43 @@ const protectDriver = async (req, res, next) => {
     }
 };
 
+const authOnlyToken = async (req, res, next) => {
+    try {
+        let token;
+
+        if (
+            req.headers.authorization &&
+            req.headers.authorization.startsWith('Bearer ')
+        ) {
+            token = req.headers.authorization.split(' ')[1];
+        }
+
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'No token provided.' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id);
+
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'User not found.' });
+        }
+
+        // ✅ isActive check NAHI hai
+        delete user.password;
+        req.user = user;
+        next();
+
+    } catch (error) {
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ success: false, message: 'Invalid token.' });
+        }
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ success: false, message: 'Token has expired.' });
+        }
+        return res.status(500).json({ success: false, message: 'Server error during authentication.' });
+    }
+};
+
 // ✅ protectDriver is now exported (was missing before)
-module.exports = { protect, isAdmin, protectUser, protectDriver };
+module.exports = { protect, isAdmin, protectUser, protectDriver ,authOnlyToken };

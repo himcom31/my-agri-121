@@ -231,10 +231,13 @@ function LoginPage({ onSwitch }) {
 // ═══════════════════════════════════════════════════════════════════
 // REGISTRATION — multi-step
 // ═══════════════════════════════════════════════════════════════════
-const TOTAL_STEPS = 7;
+
+// Total steps: 6
+// 0-Personal, 1-Shop, 2-KYC, 3-Pickup, 4-Agreement, 5-Payment
+const TOTAL_STEPS = 6;
 
 function StepIndicator({ current }) {
-  const labels = ["Personal", "Shop", "KYC", "Bank", "Pickup", "Agreement", "Payment"];
+  const labels = ["Personal", "Shop", "KYC", "Pickup", "Agreement", "Payment"];
   return (
     <div style={{ display: "flex", justifyContent: "center", marginBottom: 24, flexWrap: "wrap", gap: 4 }}>
       {labels.map((l, i) => {
@@ -242,9 +245,7 @@ function StepIndicator({ current }) {
         const active = i === current;
         return (
           <div key={i} style={{ display: "flex", alignItems: "center" }}>
-            <div style={{
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 2
-            }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
               <div style={{
                 width: 28, height: 28, borderRadius: "50%",
                 background: done ? "#3a7d1e" : active ? "#f97316" : "#e5e7eb",
@@ -274,15 +275,13 @@ const initialForm = {
   otp: "", otpSent: false, emailVerified: false,
   // Step 1: Shop
   shopName: "", shopCategory: "", shopStreet: "", shopCity: "", shopState: "", shopPincode: "",
-  deliveryCharge: "", shopDescription: "",
+  shopDescription: "",
   // Step 2: KYC
   panNumber: "", aadharNumber: "", panCardImage: null, panCardPreview: "",
-  // Step 3: Bank
-  upiId: "", upiMobile: "",
-  // Step 4: Pickup
+  // Step 3: Pickup
   sameAsShop: true, pickupStreet: "", pickupCity: "", pickupState: "", pickupPincode: "",
   workingHoursFrom: "09:00", workingHoursTo: "18:00",
-  // Step 5: Agreement
+  // Step 4: Agreement
   termsAccepted: false, commissionAccepted: false,
 };
 
@@ -297,7 +296,6 @@ function RegisterPage({ onSwitch }) {
   const panRef = useRef();
   const [platformFee, setPlatformFee] = useState(499);
 
-  // useEffect mein fee fetch karo:
   useEffect(() => {
     fetch(`${API_BASE}/platform-fee`)
       .then(r => r.json())
@@ -306,7 +304,7 @@ function RegisterPage({ onSwitch }) {
   }, []);
 
   // Load Razorpay script
-  useState(() => {
+  useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
@@ -373,7 +371,6 @@ function RegisterPage({ onSwitch }) {
         localStorage.setItem("sellerToken", data.token);
       }
 
-      // Token ho ya na ho — dashboard pe bhejo
       setTimeout(() => { window.location.href = "/seller/dashboard"; }, 2000);
     } catch (e) {
       notify(e.message, "error");
@@ -439,6 +436,8 @@ function RegisterPage({ onSwitch }) {
   // Validate per step
   const validate = () => {
     const e = {};
+
+    // Step 0: Personal
     if (step === 0) {
       if (!form.fullName.trim()) e.fullName = "Full name is required";
       if (!form.email.trim()) e.email = "Email is required";
@@ -450,6 +449,8 @@ function RegisterPage({ onSwitch }) {
       else if (form.password.length < 8) e.password = "Min 8 characters";
       if (form.password !== form.confirmPassword) e.confirmPassword = "Passwords do not match";
     }
+
+    // Step 1: Shop
     if (step === 1) {
       if (!form.shopName.trim()) e.shopName = "Shop name is required";
       if (!form.shopCategory) e.shopCategory = "Select a category";
@@ -458,8 +459,9 @@ function RegisterPage({ onSwitch }) {
       if (!form.shopState) e.shopState = "State required";
       if (!form.shopPincode.trim()) e.shopPincode = "Pincode required";
       else if (!/^\d{6}$/.test(form.shopPincode)) e.shopPincode = "6-digit pincode";
-      if (!form.deliveryCharge && form.deliveryCharge !== "0") e.deliveryCharge = "Enter delivery charge (0 for free)";
     }
+
+    // Step 2: KYC
     if (step === 2) {
       if (!form.panNumber.trim()) e.panNumber = "PAN number required";
       else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.panNumber.toUpperCase())) e.panNumber = "Invalid PAN format";
@@ -467,23 +469,22 @@ function RegisterPage({ onSwitch }) {
       else if (!/^\d{12}$/.test(form.aadharNumber)) e.aadharNumber = "12-digit Aadhaar number";
       if (!form.panCardImage) e.panCardImage = "PAN card image required";
     }
-    if (step === 3) {
-      if (!form.upiId.trim()) e.upiId = "UPI ID required";
-      else if (!form.upiId.includes("@")) e.upiId = "Invalid UPI ID (e.g. name@upi)";
-      if (!form.upiMobile.trim()) e.upiMobile = "UPI-linked mobile required";
-      else if (!/^[6-9]\d{9}$/.test(form.upiMobile)) e.upiMobile = "Invalid mobile number";
-    }
-    if (step === 4 && !form.sameAsShop) {
+
+    // Step 3: Pickup
+    if (step === 3 && !form.sameAsShop) {
       if (!form.pickupStreet.trim()) e.pickupStreet = "Pickup street required";
       if (!form.pickupCity.trim()) e.pickupCity = "Pickup city required";
       if (!form.pickupState) e.pickupState = "Pickup state required";
       if (!form.pickupPincode.trim()) e.pickupPincode = "Pickup pincode required";
       else if (!/^\d{6}$/.test(form.pickupPincode)) e.pickupPincode = "6-digit pincode";
     }
-    if (step === 5) {
+
+    // Step 4: Agreement
+    if (step === 4) {
       if (!form.termsAccepted) e.termsAccepted = "You must accept terms";
       if (!form.commissionAccepted) e.commissionAccepted = "You must accept commission structure";
     }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -491,27 +492,10 @@ function RegisterPage({ onSwitch }) {
   const next = () => { if (validate()) setStep(s => Math.min(s + 1, TOTAL_STEPS - 1)); };
   const back = () => setStep(s => Math.max(s - 1, 0));
 
-  const submit = async () => {
-    if (!validate()) return;
-    setLoading(true);
-    try {
-      const fd = new FormData();
-      // flatten form
-      Object.entries(form).forEach(([k, v]) => {
-        if (k === "panCardImage" && v) fd.append("panCardImage", v);
-        else if (typeof v !== "object") fd.append(k, v);
-      });
-      const res = await fetch(`${API_BASE}/register`, { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Registration failed");
-      notify("Registration successful! Awaiting admin approval.");
-      setTimeout(() => onSwitch(), 2500);
-    } catch (e) { notify(e.message, "error"); }
-    finally { setLoading(false); }
-  };
-
   const stepContent = () => {
     switch (step) {
+
+      // ── Step 0: Personal ──────────────────────────────
       case 0: return (
         <>
           <SectionHeader icon="👤" title="Personal Information" subtitle="Your basic account details" />
@@ -552,6 +536,8 @@ function RegisterPage({ onSwitch }) {
           </div>
         </>
       );
+
+      // ── Step 1: Shop ──────────────────────────────────
       case 1: return (
         <>
           <SectionHeader icon="🏪" title="Shop Information" subtitle="Tell us about your business" />
@@ -583,9 +569,6 @@ function RegisterPage({ onSwitch }) {
               <Input placeholder="841409" maxLength={6} value={form.shopPincode} onChange={set("shopPincode")} error={errors.shopPincode} />
             </Field>
           </div>
-          <Field label="Delivery Charge (₹)" required error={errors.deliveryCharge}>
-            <Input type="number" min="0" placeholder="0 for free delivery" value={form.deliveryCharge} onChange={set("deliveryCharge")} error={errors.deliveryCharge} />
-          </Field>
           <Field label="Shop Description">
             <textarea
               placeholder="Brief about your shop (optional)"
@@ -596,6 +579,8 @@ function RegisterPage({ onSwitch }) {
           </Field>
         </>
       );
+
+      // ── Step 2: KYC ───────────────────────────────────
       case 2: return (
         <>
           <SectionHeader icon="📄" title="KYC Documents" subtitle="Required for legal verification" />
@@ -639,21 +624,9 @@ function RegisterPage({ onSwitch }) {
           </div>
         </>
       );
+
+      // ── Step 3: Pickup ────────────────────────────────
       case 3: return (
-        <>
-          <SectionHeader icon="🏦" title="Bank / UPI Details" subtitle="For receiving payments" />
-          <Field label="UPI ID" required error={errors.upiId}>
-            <Input placeholder="name@upi or name@paytm" value={form.upiId} onChange={set("upiId")} error={errors.upiId} />
-          </Field>
-          <Field label="Mobile Number Linked to UPI" required error={errors.upiMobile}>
-            <Input type="tel" placeholder="9876543210" maxLength={10} value={form.upiMobile} onChange={set("upiMobile")} error={errors.upiMobile} />
-          </Field>
-          <div style={{ background: "#f0fdf4", border: "1px solid #3a7d1e", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#2d5a1b" }}>
-            💸 Payments will be sent directly to your UPI ID after order completion.
-          </div>
-        </>
-      );
-      case 4: return (
         <>
           <SectionHeader icon="📍" title="Pickup / Warehouse Address" subtitle="Where orders will be picked up from" />
           <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, cursor: "pointer", fontWeight: 600, color: "#2d5a1b", fontSize: 14 }}>
@@ -691,18 +664,17 @@ function RegisterPage({ onSwitch }) {
           </div>
         </>
       );
-      case 5: return (
+
+      // ── Step 4: Agreement ─────────────────────────────
+      case 4: return (
         <>
           <SectionHeader icon="✅" title="Agreement" subtitle="Review and accept to complete registration" />
-
-          {/* Terms & Conditions */}
           <div style={{ background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 10, padding: 16, marginBottom: 16, maxHeight: 180, overflowY: "auto", fontSize: 13, color: "#374151", lineHeight: 1.7 }}>
             <strong>Terms & Conditions</strong><br />
             By registering as a seller on Maharashtra Bazaar, you agree to: maintain accurate product listings, deliver orders on time, abide by our quality standards, not sell counterfeit or prohibited goods, respond to customer queries within 24 hours, and follow all applicable Indian laws regarding food safety, GST, and commerce.<br /><br />
             <strong>Platform Access Fee:</strong> A one-time platform charge will be collected at the time of registration. Only after successful payment will you be able to list your products on this website.<br /><br />
             <strong>Account Policy:</strong> If any discrepancy or fraudulent information is found in the seller's details, the seller's account will be <strong>permanently blocked</strong> without any prior notice.
           </div>
-
           <Field error={errors.termsAccepted}>
             <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 14, color: "#374151" }}>
               <input
@@ -714,7 +686,6 @@ function RegisterPage({ onSwitch }) {
               I have read and agree to the <strong>&nbsp;Terms & Conditions</strong>, including the one-time platform charge and permanent block policy for false information
             </label>
           </Field>
-
           <Field error={errors.commissionAccepted}>
             <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 14, color: "#374151" }}>
               <input
@@ -728,7 +699,9 @@ function RegisterPage({ onSwitch }) {
           </Field>
         </>
       );
-      case 6: return (
+
+      // ── Step 5: Payment ───────────────────────────────
+      case 5: return (
         <>
           <SectionHeader icon="💳" title="Registration Payment" subtitle="One-time platform activation fee" />
           <div style={{
@@ -758,8 +731,8 @@ function RegisterPage({ onSwitch }) {
           </div>
         </>
       );
-      default: return null;
 
+      default: return null;
     }
   };
 
@@ -802,13 +775,13 @@ function RegisterPage({ onSwitch }) {
 // ROOT
 // ═══════════════════════════════════════════════════════════════════
 export default function SellerAuth() {
-  const [mode, setMode] = useState("login"); // "login" | "register"
+  const [mode, setMode] = useState("login");
 
   return (
     <>
       <style>{`
         * { box-sizing: border-box; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; font-family: 'Segui UI', sans-serif; }
         @keyframes slideIn { from { opacity:0; transform: translateY(-12px) } to { opacity:1; transform: translateY(0) } }
         @media (max-width: 480px) {
           .reg-grid-2 { grid-template-columns: 1fr !important; }

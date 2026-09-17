@@ -50,12 +50,12 @@ const Sidebar = ({ sidebarOpen = true, onDesktopToggle, mobileOpen, onMobileClos
           </div>
         </Link>
 
-        <SectionHeader title="Pincode Managemant" />
-        <NavItem to="/admin/pincode" icon={<MapPin size={20} />} label="Pincode" active={isActive('/admin/pincode')} onClick={onMobileClose} />
+        {/* <SectionHeader title="Pincode Managemant" />
+        <NavItem to="/admin/pincode" icon={<MapPin size={20} />} label="Pincode" active={isActive('/admin/pincode')} onClick={onMobileClose} /> */}
 
         {/* ONLINE ORDERS */}
         <SectionHeader title="ONLINE ORDERS" />
-        <NavItem to="/admin/Order-list" icon={<ShoppingCart size={20} />} label="Orders" active={isActive('/admin/Order-list')} onClick={onMobileClose} />
+        <NavItem to="/admin/Order-list" icon={<ShoppingCart size={20} />} label="Enquiry" active={isActive('/admin/Order-list')} onClick={onMobileClose} />
 
         {/* PRODUCT MANAGEMENT */}
         <SectionHeader title="PRODUCT MANAGEMENT" />
@@ -78,7 +78,7 @@ const Sidebar = ({ sidebarOpen = true, onDesktopToggle, mobileOpen, onMobileClos
         />
 
         {/* SALE MANAGEMENT */}
-        <SectionHeader title="SALE MANAGEMENT" />
+        {/* <SectionHeader title="SALE MANAGEMENT" />
         <DropdownNavItem
           icon={<Zap size={20} />} label="Flash Sales"
           defaultOpen={isAnyActive(['/admin/viewflash', '/admin/addFlash'])}
@@ -96,7 +96,7 @@ const Sidebar = ({ sidebarOpen = true, onDesktopToggle, mobileOpen, onMobileClos
           defaultOpen={isAnyActive(['/admin/coupanlist', '/admin/Addcoupan'])}
           items={[{ label: 'List Of Coupan', path: '/admin/coupanlist' }, { label: 'Add Coupan', path: '/admin/Addcoupan' }]}
           isActive={isActive} onNav={onMobileClose}
-        />
+        /> */}
         {/* <NavItem to="/admin/pusernotication" icon={<Bell size={20} />} label="Push Notification" active={isActive('/admin/pusernotication')} onClick={onMobileClose} /> */}
         <DropdownNavItem
           icon={<Newspaper size={20} />} label="Blogs"
@@ -107,8 +107,8 @@ const Sidebar = ({ sidebarOpen = true, onDesktopToggle, mobileOpen, onMobileClos
         {/* <NavItem to="/admin/reports" icon={<BarChart3 size={20} />} label="Report" active={isActive('/admin/reports')} giftIcon onClick={onMobileClose} /> */}
 
         {/* MESSAGES */}
-        <SectionHeader title="MESSAGES" />
-        <NavItem to="/admin/support-tickets" icon={<MessageSquare size={20} />} label="Customer Query" active={isActive('/admin/support-tickets')} onClick={onMobileClose} />
+        {/* <SectionHeader title="MESSAGES" />
+        <NavItem to="/admin/support-tickets" icon={<MessageSquare size={20} />} label="Customer Query" active={isActive('/admin/support-tickets')} onClick={onMobileClose} /> */}
 
         {/* USER MANAGEMENT */}
         <SectionHeader title="USER MANAGEMENT" />
@@ -130,6 +130,14 @@ const Sidebar = ({ sidebarOpen = true, onDesktopToggle, mobileOpen, onMobileClos
           onClick={onMobileClose}
         />
         <NavItem
+          to="/admin/plans"
+          icon={<IndianRupee size={20} />}
+          label=" Customer Platform Fee"
+          active={isActive('/admin/plans')}
+          onClick={onMobileClose}
+        />
+
+        <NavItem
           to="/admin/sellers"
           icon={<Store size={20} />}
           label="Sellers"
@@ -145,7 +153,7 @@ const Sidebar = ({ sidebarOpen = true, onDesktopToggle, mobileOpen, onMobileClos
         />
 
         {/* SETTINGS */}
-        <SectionHeader title="SETTINGS" />
+        {/* <SectionHeader title="SETTINGS" />
         <NavItem to="/admin/ticket_issue" icon={<Users size={20} />} label="Ticket Issue Type" active={isActive('/admin/ticket_issue')} onClick={onMobileClose} />
         <DropdownNavItem
           icon={<Briefcase size={20} />} label="Business Settings"
@@ -165,7 +173,7 @@ const Sidebar = ({ sidebarOpen = true, onDesktopToggle, mobileOpen, onMobileClos
             { label: 'Firebase Notification', path: '/admin/firebase' },
           ]}
           isActive={isActive} onNav={onMobileClose}
-        />
+        /> */}
 
         {/* Logout */}
         <div className="pt-4 mt-2 border-t border-gray-100">

@@ -44,6 +44,9 @@ const routes = [
   ['/api/adminSellers', './routes/adminSellerRoutes.js'],
     ['/api/pincode', './routes/adminPincodeRoutes'],
     ['/api/enquiry', './routes/enquiryRoutes'],  // ✅ ./ lagao
+        ['/api/adminPlane', './routes/planAdmin'],  // ✅ ./ lagao
+
+    
 
 ];
 for (const [path_, file] of routes) {
@@ -86,3 +89,6 @@ if (frontendDist) {
 }
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`✅ Server started on port ${PORT}`));
+
+const { startExpiryCron } = require('./cron/expireSubscriptions');
+startExpiryCron();

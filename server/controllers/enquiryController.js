@@ -3,9 +3,11 @@ const Enquiry = require('../models/Enquiry');
 const { pool } = require('../config/db');
 
 // ── POST /api/enquiry — buyer submits ────────────────────────────────────────
+// controllers/enquiryController.js — createEnquiry function
+
 const createEnquiry = async (req, res) => {
   try {
-    const { productId, variantId, name, phone, message } = req.body;
+    const { productId, variantId, name, phone, message, address, locationUrl } = req.body; // ← address, locationUrl add kiya
 
     if (!productId || !name?.trim() || !phone?.trim()) {
       return res.status(400).json({
@@ -25,13 +27,15 @@ const createEnquiry = async (req, res) => {
     const sellerId  = productRows[0].seller_id;
     const enquiryId = await Enquiry.create({
       productId,
-      variantId: variantId || null,
+      variantId:   variantId || null,
       sellerId,
-      buyerId:  req.userId || null, // set by optionalAuthUser middleware
-      name:     name.trim(),
-      phone:    phone.trim(),
-      email:    null,
-      message:  message?.trim() || null,
+      buyerId:     req.userId || null,
+      name:        name.trim(),
+      phone:       phone.trim(),
+      email:       null,
+      message:     message?.trim() || null,
+      address:     address?.trim() || null,      // ← new
+      locationUrl: locationUrl?.trim() || null,  // ← new
     });
 
     const [sellerRows] = await pool.query(

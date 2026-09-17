@@ -46,8 +46,8 @@ const createSellerTable = async (pool) => {
 
 
       -- Payment details
-      upi_id              VARCHAR(100)  NOT NULL,
-      upi_mobile          VARCHAR(15)   NOT NULL,
+      upi_id              VARCHAR(100),
+      upi_mobile          VARCHAR(15),
 
       -- Pickup address
       same_as_shop        TINYINT(1)    NOT NULL DEFAULT 1,

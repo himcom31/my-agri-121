@@ -82,18 +82,18 @@ createUserTables();
 const User = {
 
     // ── Create user with hashed password ─────────────────────────────────
-    create: async ({ fullName, country, phone, email, password }) => {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+    create: async ({ fullName, country, phone, email, password, isActive = true }) => {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-        const [result] = await pool.query(
-            `INSERT INTO users (fullName, country, phone, email, password)
-             VALUES (?, ?, ?, ?, ?)`,
-            [fullName, country, phone.trim(), email.toLowerCase().trim(), hashedPassword]
-        );
-        const [rows] = await pool.query(`SELECT * FROM users WHERE id = ?`, [result.insertId]);
-        return rows[0];
-    },
+    const [result] = await pool.query(
+        `INSERT INTO users (fullName, country, phone, email, password, isActive)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [fullName, country, phone.trim(), email.toLowerCase().trim(), hashedPassword, isActive]
+    );
+    const [rows] = await pool.query(`SELECT * FROM users WHERE id = ?`, [result.insertId]);
+    return rows[0];
+},
 
     // ── Find one user by filters, optionally include password ─────────────
     findOne: async (filters = {}, includePassword = false) => {

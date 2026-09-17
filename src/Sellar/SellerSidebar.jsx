@@ -18,8 +18,8 @@ const NAV_ITEMS = [
   { key: "profile",     label: "My Profile",  Icon: User },
   { key: "add-product", label: "Add Product", Icon: PlusCircle },
   { key: "products",    label: "My Products", Icon: Package },
-  { key: "orders",      label: "Orders",      Icon: ClipboardList },
-  { key: "Wallet",      label: "Wallet",      Icon: ClipboardList },
+  { key: "orders",      label: "Enquiry",      Icon: ClipboardList },
+  // { key: "Wallet",      label: "Wallet",      Icon: ClipboardList },
 ];
 
 export default function SellerSidebar({

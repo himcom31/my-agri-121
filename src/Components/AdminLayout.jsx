@@ -41,6 +41,7 @@ import SellerProductsApproval from './Admin/SellerProductsApproval'
 import AdminPincodeManager from "./Adminpincodemanager";
 import MobileAdminBottomBar from './MobileAdminBottomBar';
 import PlatformFeeSettings from "./PlatformFeeSettings";
+import AdminPlans from './Admin/AdminPlans';
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -114,6 +115,7 @@ const AdminLayout = () => {
             <Route path="seller-products-approval" element={<SellerProductsApproval />} /> {/* NEW */}
             <Route path="pincode" element={<AdminPincodeManager/>} /> {/* NEW */}
             <Route path="platform-fee" element={<PlatformFeeSettings />} />
+            <Route path="/plans" element={<AdminPlans />} />
 
 
           </Routes>

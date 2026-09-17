@@ -5,7 +5,7 @@ import UserSupportTicket from "../Pages/Usersupportticket";
 import UserProfile from "../Pages/Userprofile";
 import OrderHistoryTab from "./Orderhistorytab";
 import ProductCard from "./ProductCard";
-
+import MyPlanTab from "./MyPlanTab" // ← YAHAN ADD KARO
 // ─── API utils ─────────────────────────────────────────────────────────────
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -887,6 +887,8 @@ export default function UserDashboard() {
     { id: "address", label: "Manage Address", icon: <PinIcon /> },
     { id: "support", label: "Support Ticket", icon: <SupportIcon /> },
     { id: "password", label: "Change Password", icon: <LockIcon /> },
+      { id: "myplan", label: "My Plan", icon: <VoucherIcon /> }, // ← YAHAN ADD KARO
+
   ];
 
   return (
@@ -1274,6 +1276,8 @@ export default function UserDashboard() {
 
           {/* ════ ORDER HISTORY TAB ════ */}
           {activeTab === "orders" && <OrderHistoryTab />}
+
+          {activeTab === "myplan" && <MyPlanTab />}
         </main>
       </div>
 

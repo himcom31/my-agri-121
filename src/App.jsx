@@ -1,4 +1,4 @@
-import React, { useState, useEffect ,useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import ScrollToTop from './Components/ScrollToTop';  // adjust path as needed
 
@@ -14,6 +14,8 @@ import SellerDashboard from './Sellar/sellardashboard';
 import UserLoginPage from './User/Pages/UserLogin';
 import UserLayout from './User/UserLayout';
 import HomePage from './User/Pages/HomePage';
+import RenewPlanModal from './User/Components/Renewplanmodal';
+
 
 // User Shell — visible on all user-side pages
 import UserNavbar from './User/Components/Usernavbar';
@@ -53,7 +55,7 @@ const PageLoader = ({ fading, onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [statusIdx, setStatusIdx] = useState(0);
   const intervalRef = useRef(null);
- 
+
   const statusMsgs = [
     'Initializing...',
     'Loading plants...',
@@ -61,7 +63,7 @@ const PageLoader = ({ fading, onComplete }) => {
     'Almost ready...',
     'Welcome!',
   ];
- 
+
   useEffect(() => {
     intervalRef.current = setInterval(() => {
       setProgress(prev => {
@@ -76,10 +78,10 @@ const PageLoader = ({ fading, onComplete }) => {
     }, 80);
     return () => clearInterval(intervalRef.current);
   }, []);
- 
+
   const pct = Math.round(progress);
   const barWidth = (242 * pct) / 100; // 260 - 9*2 = 242
- 
+
   const dots = [
     { size: 8, shape: 2, color: '#228b22', delay: '0s' },
     { size: 8, shape: 50, color: '#e85414', delay: '0.2s' },
@@ -87,7 +89,7 @@ const PageLoader = ({ fading, onComplete }) => {
     { size: 6, shape: 50, color: '#e85414cc', delay: '0.6s' },
     { size: 8, shape: 2, color: '#1a7a1a', delay: '0.8s' },
   ];
- 
+
   return (
     <div
       style={{
@@ -129,7 +131,7 @@ const PageLoader = ({ fading, onComplete }) => {
         .eg-dots-wrap { animation: egFadeUp 0.4s ease-out 1.5s both; opacity: 0; }
         .eg-status    { animation: egFadeUp 0.4s ease-out 1.6s both; opacity: 0; }
       `}</style>
- 
+
       {/* Hexagon icon */}
       <div className="eg-hex-wrap" style={{ position: 'relative', marginBottom: 24 }}>
         <svg width="160" height="148" viewBox="0 0 160 148">
@@ -138,7 +140,7 @@ const PageLoader = ({ fading, onComplete }) => {
               <rect x="77" y="58" width="6" height="72" />
             </clipPath>
           </defs>
- 
+
           <polygon
             className="eg-hex-poly"
             points="80,4 152,42 152,106 80,144 8,106 8,42"
@@ -148,23 +150,23 @@ const PageLoader = ({ fading, onComplete }) => {
             points="80,16 140,50 140,98 80,132 20,98 20,50"
             fill="none" stroke="rgba(232,84,20,0.13)" strokeWidth="1"
           />
- 
+
           {/* Stem animated via rect height trick */}
           <rect
             x="78.5" y="58" width="3" rx="1.5"
             fill="#228b22"
             style={{ height: 0, opacity: 0, animation: 'egStemGrow 0.6s ease-out 0.7s forwards' }}
           />
- 
+
           {/* Leaves */}
           <ellipse className="eg-leaf0" cx="64" cy="84" rx="20" ry="10" fill="#2da82d" transform="rotate(-30,64,84)" />
           <ellipse className="eg-leaf1" cx="96" cy="74" rx="17" ry="9" fill="#1a7a1a" transform="rotate(25,96,74)" />
           <ellipse className="eg-leaf2" cx="80" cy="62" rx="11" ry="7" fill="#3ec43e" />
- 
+
           {/* Dewdrops */}
           <circle className="eg-dew0" cx="68" cy="79" r="2.5" fill="#fff" opacity="0.8" />
           <circle className="eg-dew1" cx="90" cy="70" r="2" fill="#fff" opacity="0.7" />
- 
+
           {/* EG monogram */}
           <text
             className="eg-monogram"
@@ -178,19 +180,19 @@ const PageLoader = ({ fading, onComplete }) => {
           >EG</text>
         </svg>
       </div>
- 
+
       {/* Brand name */}
       <div className="eg-brand" style={{ marginBottom: 6 }}>
         <span style={{ fontSize: 'clamp(28px,9vw,42px)', fontWeight: 700, color: '#1a7a1a', fontFamily: "Georgia,'Times New Roman',serif", letterSpacing: -1 }}>Maha</span>
         <span style={{ fontSize: 'clamp(28px,9vw,42px)', fontWeight: 700, color: '#155a15', fontFamily: "Georgia,'Times New Roman',serif", letterSpacing: -1 }}>rashtra</span>
         <span style={{ fontSize: 'clamp(28px,9vw,42px)', fontWeight: 700, color: '#e85414', fontFamily: "Georgia,'Times New Roman',serif", letterSpacing: -1 }}>Bazaar</span>
       </div>
- 
+
       {/* Tagline */}
       <div className="eg-tagline" style={{ fontSize: 10, color: '#888', fontFamily: 'monospace', marginBottom: 28, textTransform: 'uppercase' }}>
         Plants &bull; Nature &bull; Better Life
       </div>
- 
+
       {/* Leaf-shaped progress bar (SVG) */}
       <div style={{ width: 'min(260px,82vw)', marginBottom: 10 }}>
         <svg width="100%" height="18" viewBox="0 0 260 18" preserveAspectRatio="none">
@@ -203,12 +205,12 @@ const PageLoader = ({ fading, onComplete }) => {
           <rect x="9" y="0" width={barWidth} height="18" fill="#228b22" clipPath="url(#egLeafClip)" style={{ transition: 'width 0.1s linear' }} />
         </svg>
       </div>
- 
+
       {/* Percentage */}
       <div className="eg-pct" style={{ fontSize: 12, color: '#4a8c4a', fontFamily: 'monospace', letterSpacing: '2px', marginBottom: 20 }}>
         {pct}%
       </div>
- 
+
       {/* Bouncing dots */}
       <div className="eg-dots-wrap" style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 20 }}>
         {dots.map((d, i) => (
@@ -220,7 +222,7 @@ const PageLoader = ({ fading, onComplete }) => {
           }} />
         ))}
       </div>
- 
+
       {/* Status text */}
       <div className="eg-status" style={{ fontSize: 10, color: '#bbb', fontFamily: 'monospace', letterSpacing: '2px', textTransform: 'uppercase', minHeight: 16 }}>
         {statusMsgs[statusIdx]}
@@ -275,7 +277,7 @@ const AppLayout = ({ children }) => {
   const { pathname } = useLocation();
   const isAdminRoute = pathname.startsWith('/admin');
   const isDriverRoute = pathname.startsWith('/driver');   // ← add this
-    const isSellerRoute = pathname.startsWith('/seller');  // ← ADD
+  const isSellerRoute = pathname.startsWith('/seller');  // ← ADD
 
 
 
@@ -293,15 +295,29 @@ const AppLayout = ({ children }) => {
 function App() {
   const [appReady, setAppReady] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
+  const [needsRenewal, setNeedsRenewal] = useState(false);
+  const [renewalUser, setRenewalUser] = useState(null);
+  const [renewalToken, setRenewalToken] = useState(null);
+
 
   useEffect(() => {
-  const timer = setTimeout(() => {
-    setFadeOut(true);
-    setTimeout(() => setAppReady(true), 1000); // fade duration — mat chhedo
-  }, 2000); // ← BAS YAHI BADHAO
+    const handler = (e) => {
+      setRenewalToken(e.detail.token);
+      setRenewalUser(e.detail.user);
+      setNeedsRenewal(true);
+    };
+    window.addEventListener('user-needs-renewal', handler);
+    return () => window.removeEventListener('user-needs-renewal', handler);
+  }, []);
 
-  return () => clearTimeout(timer);
-}, []);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFadeOut(true);
+      setTimeout(() => setAppReady(true), 1000); // fade duration — mat chhedo
+    }, 2000); // ← BAS YAHI BADHAO
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Show loader until app is ready
   if (!appReady) return <PageLoader fading={fadeOut} />;
@@ -309,6 +325,17 @@ function App() {
   return (
     <AppLayout>
       <CartToast />
+
+      {needsRenewal && renewalToken && (
+        <RenewPlanModal
+          token={renewalToken}
+          user={renewalUser}
+          onRenewed={(updatedUser) => {
+            setRenewalUser(updatedUser);
+            setNeedsRenewal(false);
+          }}
+        />
+      )}
       <Routes>
 
         <Route path="/" element={<HomePage />} />
@@ -368,21 +395,21 @@ function App() {
         {/* /////////////////// driver /////////////////////////////////// */}
 
         {/* ──────────────────────────────── */}
-{/*        SELLER ROUTES             */}
-{/* ──────────────────────────────── */}
+        {/*        SELLER ROUTES             */}
+        {/* ──────────────────────────────── */}
 
-{/* Public — Login & Register */}
-<Route path="/seller/auth" element={<SellerAuth />} />
+        {/* Public — Login & Register */}
+        <Route path="/seller/auth" element={<SellerAuth />} />
 
-{/* Protected — Dashboard */}
-<Route
-  path="/seller/*"
-  element={
-    <SellerProtectedRoute>
-      <SellerDashboard />
-    </SellerProtectedRoute>
-  }
-/>
+        {/* Protected — Dashboard */}
+        <Route
+          path="/seller/*"
+          element={
+            <SellerProtectedRoute>
+              <SellerDashboard />
+            </SellerProtectedRoute>
+          }
+        />
 
 
         {/* 5. Protected User Routes

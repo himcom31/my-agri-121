@@ -2,12 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import FlashSalePage from "./FlashSalePage";
 import { openLoginModal } from "../utils/authEvents";
 import { toggleWishlist, fetchWishlist } from "../utils/cartWishlist";
-import FlashSaleBanner from "./Flashsalebanner"
+import FlashSaleBanner from "./Flashsalebanner";
 import { useNavigate } from "react-router-dom";
 const API_BASEA = import.meta.env.VITE_API_URL;
-
-
-
 
 // ─── Responsive Hook ──────────────────────────────────────────────────────────
 const useResponsive = () => {
@@ -25,30 +22,201 @@ const useResponsive = () => {
   };
 };
 
+// ─── Global Animation Styles ──────────────────────────────────────────────────
+const GlobalStyles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900;1000&display=swap');
+
+    * { box-sizing: border-box; }
+    body { font-family: 'Nunito', sans-serif; background: #f0fdf4; }
+    ::-webkit-scrollbar { display: none; }
+    button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    img { max-width: 100%; }
+
+    /* ── Keyframes ── */
+    @keyframes shimmer {
+      0% { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+    @keyframes shimmerPulse {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.55; }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
+      50%  { transform: translateY(-12px) rotate(3deg); opacity: 1; }
+      100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+      50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(34,197,94,0); }
+    }
+    @keyframes pulseRing {
+      0%   { transform: scale(0.85); opacity: 0.8; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    @keyframes slideLeft {
+      from { transform: translateX(60px); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes borderFlow {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+    @keyframes sparkle {
+      0%,100% { transform: scale(0) rotate(0deg); opacity: 0; }
+      50%      { transform: scale(1) rotate(180deg); opacity: 1; }
+    }
+    @keyframes orbit {
+      from { transform: rotate(0deg) translateX(18px) rotate(0deg); }
+      to   { transform: rotate(360deg) translateX(18px) rotate(-360deg); }
+    }
+    @keyframes bgShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes leafFall {
+      0%   { transform: translateY(-20px) rotate(-15deg); opacity: 0; }
+      20%  { opacity: 1; }
+      100% { transform: translateY(80px) rotate(15deg); opacity: 0; }
+    }
+    @keyframes waveFlow {
+      0%   { d: path("M0,20 Q170,0 340,20 Q510,40 680,20 L680,60 L0,60 Z"); }
+      50%  { d: path("M0,20 Q170,40 340,20 Q510,0 680,20 L680,60 L0,60 Z"); }
+      100% { d: path("M0,20 Q170,0 340,20 Q510,40 680,20 L680,60 L0,60 Z"); }
+    }
+
+    /* ── Skeleton shimmer ── */
+    .skeleton {
+      background: linear-gradient(90deg, #e8f5e9 25%, #c8e6c9 50%, #e8f5e9 75%);
+      background-size: 800px 100%;
+      animation: shimmer 1.6s linear infinite;
+    }
+
+    /* ── Entrance animations ── */
+    .anim-fadeup  { animation: fadeUp 0.55s cubic-bezier(.22,1,.36,1) both; }
+    .anim-scalein { animation: scaleIn 0.45s cubic-bezier(.22,1,.36,1) both; }
+    .anim-fadein  { animation: fadeIn 0.5s ease both; }
+
+    /* ── Stagger delays ── */
+    .d1 { animation-delay: 0.05s; } .d2 { animation-delay: 0.1s; }
+    .d3 { animation-delay: 0.15s; } .d4 { animation-delay: 0.2s; }
+    .d5 { animation-delay: 0.25s; } .d6 { animation-delay: 0.3s; }
+    .d7 { animation-delay: 0.35s; } .d8 { animation-delay: 0.4s; }
+    .d9 { animation-delay: 0.45s; } .d10 { animation-delay: 0.5s; }
+    .d11 { animation-delay: 0.55s; } .d12 { animation-delay: 0.6s; }
+
+    /* ── Category card hover ── */
+    .cat-card {
+      transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s ease, border-color 0.2s ease;
+    }
+    .cat-card:hover {
+      transform: translateY(-8px) scale(1.04);
+      box-shadow: 0 20px 50px rgba(34,197,94,0.22);
+    }
+
+    /* ── Product card ── */
+    .prod-card {
+      transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s ease;
+    }
+    .prod-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 24px 48px rgba(0,0,0,0.14);
+    }
+
+    /* ── Promo card ── */
+    .promo-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+    .promo-card:hover {
+      transform: translateY(-4px) scale(1.015);
+      box-shadow: 0 28px 56px rgba(0,0,0,0.22);
+    }
+
+    /* ── Stat card ── */
+    .stat-item {
+      transition: transform 0.25s ease, background 0.25s ease;
+    }
+    .stat-item:hover {
+      transform: scale(1.04);
+      background: linear-gradient(135deg, #dcfce7, #bbf7d0) !important;
+    }
+
+    /* ── Section accent bar animation ── */
+    .accent-bar {
+      background: linear-gradient(180deg, #16a34a, #4ade80, #86efac, #4ade80, #16a34a);
+      background-size: 100% 300%;
+      animation: bgShift 3s ease infinite;
+    }
+
+    /* ── Nav dot ── */
+    .hero-dot {
+      transition: width 0.4s cubic-bezier(.34,1.56,.64,1), background 0.25s ease;
+    }
+
+    /* ── Floating particles ── */
+    .particle {
+      position: absolute;
+      pointer-events: none;
+      border-radius: 50%;
+      animation: floatUp 3s ease-in-out infinite;
+    }
+
+    /* ── Reduced motion ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  `}</style>
+);
+
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const HeartIcon = ({ filled }) => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "#e74c3c" : "none"} stroke={filled ? "#e74c3c" : "#bbb"} strokeWidth="2">
+  <svg width="16" height="16" viewBox="0 0 24 24"
+    fill={filled ? "#ef4444" : "none"}
+    stroke={filled ? "#ef4444" : "#94a3b8"}
+    strokeWidth="2" style={{ transition: "all 0.2s ease" }}>
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
   </svg>
 );
 
-const EnquiryIcon = ({ size = 13, stroke = "#fff" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-  </svg>
-);
-
 const StarIcon = ({ filled }) => (
-  <svg width="11" height="11" viewBox="0 0 24 24" fill={filled ? "#f39c12" : "#ddd"} stroke={filled ? "#f39c12" : "#ddd"} strokeWidth="1">
+  <svg width="11" height="11" viewBox="0 0 24 24"
+    fill={filled ? "#f59e0b" : "#e2e8f0"}
+    stroke={filled ? "#f59e0b" : "#e2e8f0"} strokeWidth="1">
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
   </svg>
 );
 
 const ChevronLeft = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
 );
 const ChevronRight = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
 );
 
 const StarRating = ({ rating = 4 }) => (
@@ -57,24 +225,70 @@ const StarRating = ({ rating = 4 }) => (
   </span>
 );
 
+// ─── Floating Particles ───────────────────────────────────────────────────────
+const FloatingParticles = () => {
+  const particles = [
+    { size: 6, x: "8%", delay: "0s", dur: "3.2s", color: "rgba(74,222,128,0.5)" },
+    { size: 4, x: "18%", delay: "0.8s", dur: "2.8s", color: "rgba(34,197,94,0.35)" },
+    { size: 8, x: "32%", delay: "0.3s", dur: "3.6s", color: "rgba(134,239,172,0.4)" },
+    { size: 5, x: "55%", delay: "1.2s", dur: "2.5s", color: "rgba(74,222,128,0.45)" },
+    { size: 7, x: "70%", delay: "0.5s", dur: "3.9s", color: "rgba(22,163,74,0.3)" },
+    { size: 4, x: "82%", delay: "1.6s", dur: "2.9s", color: "rgba(134,239,172,0.5)" },
+    { size: 6, x: "92%", delay: "0.9s", dur: "3.3s", color: "rgba(74,222,128,0.4)" },
+  ];
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+      {particles.map((p, i) => (
+        <div key={i} className="particle" style={{
+          width: p.size, height: p.size,
+          left: p.x, bottom: 0,
+          background: p.color,
+          animationDelay: p.delay,
+          animationDuration: p.dur,
+        }} />
+      ))}
+    </div>
+  );
+};
+
+// ─── Section Header ───────────────────────────────────────────────────────────
+const SectionHeader = ({ title, subtitle, isMobile }) => (
+  <div className="anim-fadeup" style={{ display: "flex", alignItems: "flex-end", gap: 12, marginBottom: isMobile ? 18 : 26 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div className="accent-bar" style={{ width: 4, height: 26, borderRadius: 2 }} />
+      <div>
+        <h2 style={{
+          fontSize: isMobile ? 17 : 22, fontWeight: 900, color: "#14532d",
+          margin: 0, lineHeight: 1.1, letterSpacing: "-0.3px",
+        }}>{title}</h2>
+        {subtitle && (
+          <p style={{
+            fontSize: isMobile ? 11 : 13, color: "#4ade80", margin: "3px 0 0",
+            fontWeight: 600, letterSpacing: "0.2px",
+          }}>{subtitle}</p>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
 // ─── Hero Banner ──────────────────────────────────────────────────────────────
 const HeroBanner = () => {
   const { isMobile, isTablet } = useResponsive();
-  const [slide, setSlide]           = useState(0);
+  const [slide, setSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [slides, setSlides]         = useState([]);
-  const [loading, setLoading]       = useState(true);
+  const [slides, setSlides] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const autoRef = useRef(null);
 
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const res  = await fetch(`${import.meta.env.VITE_API_URL}/api/banner/list`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/banner/list`);
         const data = await res.json();
-        if (data.success) {
-          setSlides(data.data.filter(b => b.status === 'Active'));
-        }
+        if (data.success) setSlides(data.data.filter(b => b.status === "Active"));
       } catch (err) {
-        console.error('Banner fetch failed:', err);
+        console.error("Banner fetch failed:", err);
       } finally {
         setLoading(false);
       }
@@ -85,102 +299,129 @@ const HeroBanner = () => {
   const goTo = (i) => {
     if (i === slide || isTransitioning || slides.length === 0) return;
     setIsTransitioning(true);
-    setTimeout(() => { setSlide(i); setIsTransitioning(false); }, 300);
+    setTimeout(() => { setSlide(i); setIsTransitioning(false); }, 350);
   };
 
   useEffect(() => {
     if (slides.length === 0) return;
-    const t = setInterval(() => goTo((slide + 1) % slides.length), 4500);
-    return () => clearInterval(t);
+    autoRef.current = setInterval(() => goTo((slide + 1) % slides.length), 4500);
+    return () => clearInterval(autoRef.current);
   }, [slide, slides.length]);
 
-  const height = isMobile ? 200 : isTablet ? 320 : 550;
+  const height = isMobile ? 220 : isTablet ? 360 : 580;
 
   if (loading) return (
-    <div style={{
-      width: '100%', height, borderRadius: isMobile ? 8 : 10,
-      background: '#e5e7eb',
-      marginBottom: isMobile ? 24 : isTablet ? 40 : 80,
+    <div className="skeleton" style={{
+      width: "100%", height, borderRadius: isMobile ? 20 : 28,
+      marginBottom: isMobile ? 32 : 56,
     }} />
   );
 
   if (slides.length === 0) return null;
 
   return (
-    <div style={{
-      position: 'relative', width: '100%', height,
-      borderRadius: isMobile ? 8 : 10, overflow: 'hidden',
-      marginBottom: isMobile ? 24 : isTablet ? 40 : 80,
-      boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+    <div className="anim-scalein" style={{
+      position: "relative", width: "100%", height,
+      borderRadius: isMobile ? 20 : 28, overflow: "hidden",
+      marginBottom: isMobile ? 32 : 56,
+      boxShadow: "0 24px 80px rgba(0,0,0,0.22)",
     }}>
+      {/* Image */}
       <img
         key={slide}
-        src={slides[slide].bannerImage}  
+        src={slides[slide].bannerImage}
         alt={slides[slide].title}
         style={{
-          position: 'absolute', inset: 0, width: '100%', height: '100%',
-          objectFit: 'cover', opacity: isTransitioning ? 0 : 1,
-          transition: 'opacity 0.4s ease'
+          position: "absolute", inset: 0, width: "100%", height: "100%",
+          objectFit: "cover",
+          opacity: isTransitioning ? 0 : 1,
+          transform: isTransitioning ? "scale(1.04)" : "scale(1)",
+          transition: "opacity 0.4s ease, transform 0.4s ease",
         }}
       />
-      <div style={{ position: 'relative', height: '100%', display: 'flex', alignItems: 'flex-end', padding: isMobile ? '0 16px 16px' : '0 48px 32px' }}>
-        <div style={{ display: 'flex', gap: 5 }}>
-          {slides.map((_, i) => (
-            <button key={i} onClick={() => goTo(i)} style={{
-              width: i === slide ? 22 : 8, height: 8, borderRadius: 4,
-              background: i === slide ? '#fff' : 'rgba(255,255,255,0.45)',
-              border: 'none', cursor: 'pointer', transition: 'width 0.3s', padding: 0
-            }} />
-          ))}
-        </div>
+
+      {/* Gradient overlays */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 45%, transparent 70%)",
+      }} />
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "linear-gradient(to right, rgba(0,0,0,0.15) 0%, transparent 50%)",
+      }} />
+
+      {/* Floating particles on banner */}
+      <FloatingParticles />
+
+      {/* Progress bar */}
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0, height: 3,
+        background: "rgba(255,255,255,0.15)",
+      }}>
+        <div style={{
+          height: "100%",
+          background: "linear-gradient(to right, #4ade80, #22c55e)",
+          width: `${((slide + 1) / slides.length) * 100}%`,
+          transition: "width 0.4s ease",
+        }} />
       </div>
-      <button onClick={() => goTo((slide - 1 + slides.length) % slides.length)}
-        style={{ position: 'absolute', top: '50%', left: isMobile ? 6 : 12, transform: 'translateY(-50%)', width: isMobile ? 26 : 32, height: isMobile ? 26 : 32, borderRadius: '50%', background: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.4)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <ChevronLeft />
-      </button>
-      <button onClick={() => goTo((slide + 1) % slides.length)}
-        style={{ position: 'absolute', top: '50%', right: isMobile ? 6 : 12, transform: 'translateY(-50%)', width: isMobile ? 26 : 32, height: isMobile ? 26 : 32, borderRadius: '50%', background: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.4)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <ChevronRight />
-      </button>
+
+      {/* Dots */}
+      <div style={{
+        position: "absolute", bottom: 22, left: "50%", transform: "translateX(-50%)",
+        display: "flex", gap: 7, alignItems: "center",
+      }}>
+        {slides.map((_, i) => (
+          <button key={i} onClick={() => goTo(i)} className="hero-dot" style={{
+            width: i === slide ? 28 : 8, height: 8, borderRadius: 4,
+            background: i === slide ? "#fff" : "rgba(255,255,255,0.4)",
+            border: "none", cursor: "pointer", padding: 0,
+          }} />
+        ))}
+      </div>
+
+      {/* Nav buttons */}
+      {[
+        { side: "left", action: () => goTo((slide - 1 + slides.length) % slides.length), Icon: ChevronLeft },
+        { side: "right", action: () => goTo((slide + 1) % slides.length), Icon: ChevronRight },
+      ].map(({ side, action, Icon }) => (
+        <button key={side} onClick={action} style={{
+          position: "absolute", top: "50%",
+          [side]: isMobile ? 10 : 18,
+          transform: "translateY(-50%)",
+          width: isMobile ? 34 : 44, height: isMobile ? 34 : 44,
+          borderRadius: "50%",
+          background: "rgba(255,255,255,0.18)",
+          backdropFilter: "blur(10px) saturate(1.5)",
+          WebkitBackdropFilter: "blur(10px) saturate(1.5)",
+          border: "1px solid rgba(255,255,255,0.3)",
+          color: "#fff", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "background 0.2s ease, transform 0.2s ease",
+        }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.32)";
+            e.currentTarget.style.transform = "translateY(-50%) scale(1.1)";
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.18)";
+            e.currentTarget.style.transform = "translateY(-50%) scale(1)";
+          }}>
+          <Icon />
+        </button>
+      ))}
     </div>
   );
 };
 
-// ─── Section Header ───────────────────────────────────────────────────────────
-const SectionHeader = ({ title, onPrev, onNext }) => {
-  const { isMobile } = useResponsive();
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-      <h2 style={{ fontSize: isMobile ? 15 : 18, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>{title}</h2>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ color: "#2d9e2d", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>View All</span>
-        {onPrev && (
-          <>
-            <button onClick={onPrev} style={navBtnStyle}><ChevronLeft /></button>
-            <button onClick={onNext} style={navBtnStyle}><ChevronRight /></button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const navBtnStyle = {
-  width: 26, height: 26, borderRadius: 4, border: "1px solid #ddd",
-  background: "#fff", cursor: "pointer", display: "flex",
-  alignItems: "center", justifyContent: "center", padding: 0
-};
-
-const categoryEmojis = ["🥦", "🐟", "🍎", "🥩", "🧀", "🍞", "🌶️", "🫒", "🥚"];
+// ─── Category Emojis ──────────────────────────────────────────────────────────
+const categoryEmojis = ["🥦","🐟","🍎","🥩","🧀","🍞","🌶️","🫒","🥚","🥕","🧅","🌽","🫐","🍋","🥜","🌿"];
 
 // ─── Feature Categories ───────────────────────────────────────────────────────
 const FeatureCategories = ({ categories, loading, products }) => {
   const navigate = useNavigate();
   const { isMobile, isTablet } = useResponsive();
-  const [start, setStart] = useState(0);
-
-  const visible = isMobile ? 3 : isTablet ? 4 : 6;
-  const total = categories.length;
+  const [hovered, setHovered] = useState(null);
 
   const getCount = (catId) =>
     products.filter(p => {
@@ -190,51 +431,138 @@ const FeatureCategories = ({ categories, loading, products }) => {
 
   const handleCategoryClick = (catId) => navigate(`/user/product?categories=${catId}`);
 
-  const cols = `repeat(${Math.min(total || visible, visible)}, 1fr)`;
+  const cols = isMobile ? 3 : isTablet ? 4 : 6;
+
+  const buildRows = (items, perRow) => {
+    const rows = [];
+    for (let i = 0; i < items.length; i += perRow) rows.push(items.slice(i, i + perRow));
+    return rows;
+  };
+
+  const rows = buildRows(categories, cols);
 
   return (
-    <section id="feature-categories" style={{ marginBottom: isMobile ? 28 : isTablet ? 40 : 72, scrollMarginTop: 80 }}>
-      <SectionHeader
-        title="Feature Category"
-        onPrev={() => setStart(s => Math.max(0, s - 1))}
-        onNext={() => setStart(s => Math.min(Math.max(0, total - visible), s + 1))}
-      />
+    <section id="feature-categories" style={{ marginBottom: isMobile ? 44 : 68, scrollMarginTop: 80 }}>
+      <SectionHeader title="Shop by Category" subtitle="Fresh picks, every day" isMobile={isMobile} />
+
       {loading ? (
-        <div style={{ display: "grid", gridTemplateColumns: cols, gap: isMobile ? 8 : 14 }}>
-          {[...Array(visible)].map((_, i) => (
-            <div key={i} style={{ height: isMobile ? 120 : 200, borderRadius: 12, background: "#f0f0f0", animation: "pulse 1.4s ease-in-out infinite" }} />
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${cols}, 1fr)`,
+          gap: isMobile ? 10 : 16,
+        }}>
+          {[...Array(cols * 2)].map((_, i) => (
+            <div key={i} className="skeleton" style={{
+              height: isMobile ? 110 : 170, borderRadius: 18,
+            }} />
           ))}
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: cols, gap: isMobile ? 8 : 14 }}>
-          {categories.slice(start, start + visible).map((cat, i) => {
-            const img = cat.thumbnail || cat.image;
+        <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 10 : 16 }}>
+          {rows.map((row, rowIdx) => {
+            const isShortRow = row.length < cols;
             return (
-              <div
-                key={cat.id || i}
-                onClick={() => handleCategoryClick(cat.id)}
-                style={{
-                  display: "flex", flexDirection: "column", alignItems: "center",
-                  padding: isMobile ? "10px 6px 10px" : "16px 12px 14px",
-                  background: "#fff", borderRadius: 16, border: "5px solid #efefef",
-                  cursor: "pointer", transition: "border 0.2s, box-shadow 0.2s",
-                  boxShadow: "0 2px 9px rgba(0,0,0,0.07)"
-                }}
-                onMouseEnter={e => { e.currentTarget.style.border = "1.5px solid #2d9e2d"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(45,158,45,0.12)"; }}
-                onMouseLeave={e => { e.currentTarget.style.border = "5px solid #efefef"; e.currentTarget.style.boxShadow = "0 2px 9px rgba(0,0,0,0.07)"; }}
-              >
-                <div style={{
-                  width: "100%", height: isMobile ? 70 : 150,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  marginBottom: isMobile ? 6 : 14, overflow: "hidden"
-                }}>
-                  {img
-                    ? <img src={img} alt={cat.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} onError={e => { e.target.style.display = "none"; }} />
-                    : <div style={{ fontSize: isMobile ? 32 : 60 }}>{categoryEmojis[i % categoryEmojis.length]}</div>
-                  }
-                </div>
-                <div style={{ fontSize: isMobile ? 11 : 14, fontWeight: 700, color: "#1a1a1a", textAlign: "center", marginBottom: 2 }}>{cat.name}</div>
-                <div style={{ fontSize: isMobile ? 10 : 12, color: "#888" }}>{getCount(cat.id)} Items</div>
+              <div key={rowIdx} style={{
+                display: "flex", gap: isMobile ? 10 : 16,
+                justifyContent: isShortRow ? "center" : "flex-start",
+              }}>
+                {row.map((cat, i) => {
+                  const globalIdx = rowIdx * cols + i;
+                  const img = cat.thumbnail || cat.image;
+                  const isHov = hovered === `${rowIdx}-${i}`;
+                  const animClass = `anim-fadeup d${Math.min(globalIdx + 1, 12)}`;
+
+                  return (
+                    <div
+                      key={cat.id || i}
+                      className={`cat-card ${animClass}`}
+                      onMouseEnter={() => setHovered(`${rowIdx}-${i}`)}
+                      onMouseLeave={() => setHovered(null)}
+                      onClick={() => handleCategoryClick(cat.id)}
+                      style={{
+                        flex: `0 0 calc((100% - ${(cols - 1) * (isMobile ? 10 : 16)}px) / ${cols})`,
+                        display: "flex", flexDirection: "column", alignItems: "center",
+                        padding: isMobile ? "12px 8px 12px" : "20px 12px 16px",
+                        background: isHov
+                          ? "linear-gradient(145deg, #f0fdf4, #dcfce7)"
+                          : "#fff",
+                        borderRadius: isMobile ? 16 : 22,
+                        border: isHov ? "2px solid #22c55e" : "2px solid #f0fdf4",
+                        cursor: "pointer",
+                        position: "relative", overflow: "hidden",
+                        boxShadow: isHov
+                          ? "0 20px 50px rgba(34,197,94,0.22)"
+                          : "0 2px 16px rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      {/* Pulse ring on hover */}
+                      {isHov && (
+                        <div style={{
+                          position: "absolute", top: 10, right: 10,
+                          width: 8, height: 8, borderRadius: "50%",
+                          background: "#22c55e",
+                          animation: "pulse 1.5s ease-in-out infinite",
+                        }} />
+                      )}
+
+                      {/* Background circle decoration */}
+                      <div style={{
+                        position: "absolute", top: -20, right: -20, width: 70, height: 70,
+                        borderRadius: "50%",
+                        background: isHov ? "rgba(34,197,94,0.1)" : "rgba(34,197,94,0.05)",
+                        transition: "background 0.3s ease",
+                      }} />
+                      <div style={{
+                        position: "absolute", bottom: -15, left: -15, width: 50, height: 50,
+                        borderRadius: "50%",
+                        background: isHov ? "rgba(74,222,128,0.12)" : "transparent",
+                        transition: "background 0.3s ease",
+                      }} />
+
+                      {/* Image / Emoji */}
+                      <div style={{
+                        width: "100%", height: isMobile ? 68 : 124,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        marginBottom: isMobile ? 8 : 12, overflow: "hidden",
+                        transform: isHov ? "scale(1.08) translateY(-2px)" : "scale(1)",
+                        transition: "transform 0.35s cubic-bezier(.34,1.56,.64,1)",
+                      }}>
+                        {img
+                          ? <img src={img} alt={cat.name}
+                              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                              onError={e => { e.target.style.display = "none"; }} />
+                          : <div style={{
+                              fontSize: isMobile ? 32 : 52, lineHeight: 1,
+                              filter: isHov ? "drop-shadow(0 4px 8px rgba(0,0,0,0.2))" : "none",
+                              transition: "filter 0.25s ease",
+                            }}>
+                              {categoryEmojis[globalIdx % categoryEmojis.length]}
+                            </div>
+                        }
+                      </div>
+
+                      {/* Name */}
+                      <div style={{
+                        fontSize: isMobile ? 10 : 13, fontWeight: 800,
+                        color: isHov ? "#14532d" : "#1e293b",
+                        textAlign: "center", marginBottom: 4, lineHeight: 1.3,
+                        overflow: "hidden", display: "-webkit-box",
+                        WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                        transition: "color 0.2s ease",
+                      }}>{cat.name}</div>
+
+                      {/* Count badge */}
+                      <div style={{
+                        fontSize: isMobile ? 9 : 11, fontWeight: 700,
+                        color: isHov ? "#15803d" : "#22c55e",
+                        background: isHov ? "#dcfce7" : "#f0fdf4",
+                        padding: "3px 9px", borderRadius: 20, marginTop: 2,
+                        border: `1px solid ${isHov ? "#86efac" : "#bbf7d0"}`,
+                        transition: "all 0.2s ease",
+                      }}>{getCount(cat.id)} items</div>
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
@@ -244,422 +572,224 @@ const FeatureCategories = ({ categories, loading, products }) => {
   );
 };
 
-
-
-// ─── Promo Banners (ads) ───────────────────────────────────────────────────────
-// ─── Promo Banners (mobile: animated peek carousel with auto-scroll) ─────────
+// ─── Promo Banners ────────────────────────────────────────────────────────────
 const PromoBanners = () => {
   const { isMobile, isTablet } = useResponsive();
   const [ads, setAds] = useState([]);
   const scrollRef = useRef(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0); // continuous, for smooth scaling
   const isUserInteracting = useRef(false);
   const resumeTimer = useRef(null);
-  const autoScrollTimer = useRef(null);
 
   useEffect(() => {
     fetch(`${API_BASEA}/api/ad/`)
       .then(r => r.json())
       .then(data => setAds((data.ads || []).filter(a => a.isActive)))
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   const fallbacks = [
-    { bg: "#1a1a1a", emoji: "🥬", tag: "Fresh & healthy", label: "For home delivery", badge: "20% off", color: "#4caf50" },
-    { bg: "#e67e22", emoji: "🛒", tag: "GROCERY", label: "SALE", sub: "BEST VEGETABLE ONLINE", badge: "SAVE 50%", color: "#fff" },
-    { bg: "linear-gradient(135deg,#1a6b1a,#4caf50)", emoji: "🍅", tag: "Limited", label: "Fresh", sub: "Daily", badge: "50%", color: "#ffe600" },
+    {
+      bg: "linear-gradient(135deg,#064e3b,#059669,#34d399)",
+      emoji: "🥬", label: "Fresh Greens", sub: "Farm to table daily", badge: "20% OFF",
+      accent: "#6ee7b7",
+    },
+    {
+      bg: "linear-gradient(135deg,#7c2d12,#c2410c,#fb923c)",
+      emoji: "🛒", label: "Mega Sale", sub: "Limited time deals", badge: "SAVE 50%",
+      accent: "#fed7aa",
+    },
+    {
+      bg: "linear-gradient(135deg,#831843,#be185d,#f472b6)",
+      emoji: "🍅", label: "Daily Fresh", sub: "Order before 10 AM", badge: "FREE DELIVERY",
+      accent: "#fbcfe8",
+    },
   ];
 
   const items = ads.length > 0 ? ads : fallbacks;
 
-  // ── Auto-scroll (mobile only) ──
   useEffect(() => {
     if (!isMobile || items.length <= 1) return;
-
-    autoScrollTimer.current = setInterval(() => {
+    const t = setInterval(() => {
       if (isUserInteracting.current) return;
       const el = scrollRef.current;
       if (!el) return;
-
-      const cardWidth = el.scrollWidth / items.length;
-      const nextIndex = (Math.round(el.scrollLeft / cardWidth) + 1) % items.length;
-
-      el.scrollTo({
-        left: nextIndex === 0 ? 0 : nextIndex * cardWidth,
-        behavior: "smooth",
-      });
-    }, 3000);
-
-    return () => clearInterval(autoScrollTimer.current);
+      const cardW = el.scrollWidth / items.length;
+      const next = (Math.round(el.scrollLeft / cardW) + 1) % items.length;
+      el.scrollTo({ left: next * cardW, behavior: "smooth" });
+    }, 3400);
+    return () => clearInterval(t);
   }, [isMobile, items.length]);
 
-  const pauseAutoScroll = () => {
-    isUserInteracting.current = true;
-    clearTimeout(resumeTimer.current);
-  };
-
-  const resumeAutoScrollSoon = () => {
-    clearTimeout(resumeTimer.current);
-    resumeTimer.current = setTimeout(() => {
-      isUserInteracting.current = false;
-    }, 4000);
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const cardW = el.scrollWidth / items.length;
+    const raw = el.scrollLeft / cardW;
+    setScrollProgress(raw);
+    setActiveIndex(Math.max(0, Math.min(items.length - 1, Math.round(raw))));
   };
 
   const renderCard = (item, i, height) => {
-    if (item.image) {
-      return (
-        <div
-          key={item.id || i}
-          style={{
-            borderRadius: 14, overflow: "hidden", cursor: "pointer",
-            position: "relative", boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
-            background: "#111", height, width: "100%",
-          }}
-        >
-          <img src={item.image} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-          {item.title && (
-            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent,rgba(0,0,0,0.65))", padding: "18px 12px 10px" }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", textAlign: "center" }}>{item.title}</div>
-            </div>
+    if (item.image) return (
+      <div key={item.id || i} className="promo-card" style={{
+        borderRadius: 20, overflow: "hidden",
+        position: "relative", height, width: "100%",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+      }}>
+        <img src={item.image} alt={item.title}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "linear-gradient(to top,rgba(0,0,0,0.6),transparent)",
+        }} />
+        {item.title && (
+          <div style={{
+            position: "absolute", bottom: 16, left: 16, right: 16,
+            fontSize: 15, fontWeight: 800, color: "#fff",
+          }}>{item.title}</div>
+        )}
+      </div>
+    );
+
+    return (
+      <div key={i} className="promo-card" style={{
+        background: item.bg, borderRadius: 20,
+        padding: isMobile ? "20px 18px" : "28px 24px",
+        height, width: "100%",
+        display: "flex", flexDirection: "column", justifyContent: "space-between",
+        position: "relative", overflow: "hidden",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+      }}>
+        {/* Background glow */}
+        <div style={{
+          position: "absolute", right: -30, top: -30,
+          width: 160, height: 160, borderRadius: "50%",
+          background: "rgba(255,255,255,0.06)",
+        }} />
+        <div style={{
+          position: "absolute", right: -10, bottom: -20,
+          width: 100, height: 100, borderRadius: "50%",
+          background: "rgba(255,255,255,0.08)",
+        }} />
+
+        {/* Emoji — large background */}
+        <div style={{
+          position: "absolute", right: 14, bottom: 14,
+          fontSize: isMobile ? 60 : 88, opacity: 0.2, lineHeight: 1,
+          animation: "floatUp 4s ease-in-out infinite",
+          filter: "blur(0px)",
+        }}>{item.emoji}</div>
+
+        <div>
+          {/* Sparkle badge */}
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 5,
+            background: "rgba(255,255,255,0.18)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            border: "1px solid rgba(255,255,255,0.3)",
+            borderRadius: 30, padding: "4px 12px 4px 8px",
+            marginBottom: 12,
+          }}>
+            <span style={{ fontSize: 13 }}>✨</span>
+            <span style={{
+              fontSize: isMobile ? 11 : 12, fontWeight: 800, color: "#fff",
+              letterSpacing: "0.5px",
+            }}>{item.badge}</span>
+          </div>
+
+          <div style={{
+            fontSize: isMobile ? 20 : 26, fontWeight: 900, color: "#fff",
+            lineHeight: 1.15, marginBottom: 6, letterSpacing: "-0.5px",
+          }}>{item.label}</div>
+
+          {item.sub && (
+            <div style={{
+              fontSize: isMobile ? 11 : 13, color: "rgba(255,255,255,0.75)",
+              fontWeight: 600,
+            }}>{item.sub}</div>
           )}
         </div>
-      );
-    }
-    return (
-      <div
-        key={i}
-        style={{
-          background: item.bg, borderRadius: 14, padding: "18px 16px",
-          height, width: "100%", display: "flex", flexDirection: "column",
-          justifyContent: "space-between", cursor: "pointer", overflow: "hidden",
-          position: "relative",
-        }}
-      >
-        <div style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", fontSize: 44, opacity: 0.25 }}>{item.emoji}</div>
-        <div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginBottom: 2 }}>{item.tag}</div>
-          <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.1 }}>{item.label}</div>
-          {item.sub && <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", opacity: 0.85 }}>{item.sub}</div>}
-        </div>
+
         <div style={{
-          display: "inline-block", background: item.color,
-          color: item.color === "#fff" ? "#e67e22" : "#000",
-          fontWeight: 800, fontSize: 12, padding: "3px 10px", borderRadius: 4, alignSelf: "flex-start"
-        }}>{item.badge}</div>
+          display: "inline-flex", alignItems: "center", gap: 8,
+          background: "rgba(255,255,255,0.95)",
+          color: "#14532d", fontWeight: 800,
+          fontSize: isMobile ? 12 : 14,
+          padding: "8px 16px", borderRadius: 12,
+          alignSelf: "flex-start",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+          transition: "transform 0.2s ease",
+        }}>
+          Shop Now <span style={{ fontSize: 14 }}>→</span>
+        </div>
       </div>
     );
   };
 
-  // ── Mobile: animated swipeable peek carousel ──
   if (isMobile) {
-    const height = 180;
-    const sidePad = 34;
-
-    const handleScroll = () => {
-      const el = scrollRef.current;
-      if (!el) return;
-      const cardWidth = el.scrollWidth / items.length;
-      const rawIndex = el.scrollLeft / cardWidth;
-      setScrollProgress(rawIndex);
-      const idx = Math.round(rawIndex);
-      setActiveIndex(Math.max(0, Math.min(items.length - 1, idx)));
-    };
-
-    const trackWidth = 120;
-    const segWidth = items.length > 0 ? trackWidth / items.length : trackWidth;
-    const segLeft = activeIndex * segWidth;
-
+    const height = 190;
+    const sidePad = 24;
     return (
-      <section style={{ marginBottom: 24, animation: "promoFadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
-        <style>{`
-          @keyframes promoFadeInUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes progressGlow {
-            0%, 100% { box-shadow: 0 0 0 rgba(45,158,45,0); }
-            50%      { box-shadow: 0 0 8px rgba(45,158,45,0.6); }
-          }
-        `}</style>
+      <section style={{ marginBottom: 44 }}>
+        <SectionHeader title="Special Offers" subtitle="Deals you'll love" isMobile={isMobile} />
         <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          onTouchStart={pauseAutoScroll}
-          onTouchEnd={resumeAutoScrollSoon}
-          onMouseDown={pauseAutoScroll}
-          onMouseUp={resumeAutoScrollSoon}
+          ref={scrollRef} onScroll={handleScroll}
+          onTouchStart={() => { isUserInteracting.current = true; }}
+          onTouchEnd={() => {
+            clearTimeout(resumeTimer.current);
+            resumeTimer.current = setTimeout(() => { isUserInteracting.current = false; }, 3500);
+          }}
           style={{
-            display: "flex", gap: 10, overflowX: "auto",
+            display: "flex", gap: 14, overflowX: "auto",
             scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch",
-            padding: `20px ${sidePad}px`, scrollbarWidth: "none",
-            scrollBehavior: "smooth",
+            padding: `4px ${sidePad}px 8px`, scrollbarWidth: "none",
           }}
         >
           {items.map((item, i) => {
-            const distance = Math.min(Math.abs(scrollProgress - i), 1);
-            const scale = 1 - distance * 0.12;
-            const opacity = 1 - distance * 0.45;
-            const translateY = distance * 8;
-
+            const dist = Math.min(Math.abs(scrollProgress - i), 1);
             return (
-              <div
-                key={item.id || i}
-                style={{
-                  flex: `0 0 calc(100% - ${sidePad * 2}px)`,
-                  scrollSnapAlign: "center",
-                  transform: `scale(${scale}) translateY(${translateY}px)`,
-                  opacity,
-                  transition: "transform 0.35s cubic-bezier(0.34,1.15,0.64,1), opacity 0.35s ease",
-                  transformOrigin: "center",
-                }}
-              >
+              <div key={item.id || i} style={{
+                flex: `0 0 calc(100% - ${sidePad * 2}px)`,
+                scrollSnapAlign: "center",
+                transform: `scale(${1 - dist * 0.06}) translateY(${dist * 5}px)`,
+                opacity: 1 - dist * 0.3,
+                transition: "transform 0.35s cubic-bezier(.34,1.15,.64,1), opacity 0.35s ease",
+              }}>
                 {renderCard(item, i, height)}
               </div>
             );
           })}
         </div>
-
         {items.length > 1 && (
           <div style={{
-            width: trackWidth, height: 5, borderRadius: 3, background: "#e0e0e0",
-            margin: "14px auto 0", position: "relative", overflow: "hidden",
+            display: "flex", justifyContent: "center", gap: 6, marginTop: 14,
           }}>
-            <div style={{
-              position: "absolute", top: 0, left: segLeft, width: segWidth, height: "100%",
-              background: "#2d9e2d", borderRadius: 3,
-              transition: "left 0.45s cubic-bezier(0.34,1.15,0.64,1)",
-              animation: "progressGlow 1.6s ease-in-out infinite",
-            }} />
+            {items.map((_, i) => (
+              <div key={i} style={{
+                width: i === activeIndex ? 24 : 7, height: 7, borderRadius: 4,
+                background: i === activeIndex
+                  ? "linear-gradient(to right,#16a34a,#4ade80)"
+                  : "#bbf7d0",
+                transition: "width 0.35s cubic-bezier(.34,1.56,.64,1), background 0.25s ease",
+              }} />
+            ))}
           </div>
         )}
       </section>
     );
   }
 
-  // ── Tablet / Desktop: grid (unchanged) ──
   const cols = isTablet ? "1fr 1fr" : `repeat(${Math.min(items.length, 3)}, 1fr)`;
-  const bannerHeight = isTablet ? 200 : 260;
-
   return (
-    <section style={{ marginBottom: isTablet ? 36 : 60 }}>
-      <div style={{ display: "grid", gridTemplateColumns: cols, gap: 20 }}>
-        {items.slice(0, 3).map((item, i) => renderCard(item, i, bannerHeight))}
+    <section style={{ marginBottom: 68 }}>
+      <SectionHeader title="Special Offers" subtitle="Deals you'll love" isMobile={isMobile} />
+      <div style={{ display: "grid", gridTemplateColumns: cols, gap: 20 }}
+           className="anim-fadeup">
+        {items.slice(0, 3).map((item, i) => renderCard(item, i, 240))}
       </div>
-    </section>
-  );
-};
-
-// ─── Product Card (OLX-style: Wishlist heart + "Go for Enquiry" → product page) ─
-const ProductCard = ({ product }) => {
-  const navigate = useNavigate();
-
-  const { isMobile } = useResponsive();
-  const [wished, setWished] = useState(false);
-
-  const oldPrice = Number(product.price || product.buyingPrice || 0);
-  const price = Number(product.oldPrice || product.sellingPrice);
-  const name = product.name || product.title || "Product";
-  const unit = product.unit || product.weight || "1 KG";
-  const image = product.image || product.thumbnail || product.images?.[0];
-  const stock = product.stockQuantity ?? 0;
-  const isOutOfStock = stock === 0;
-  const isLowStock = stock > 0 && stock <= 10;
-
-  const isLoggedIn = () => !!localStorage.getItem("userToken");
-
-  useEffect(() => {
-    if (!isLoggedIn()) return;
-    fetchWishlist()
-      .then(data => {
-        const ids = (data.products || []).map(p => p.id || p);
-        setWished(ids.includes(product.id));
-      })
-      .catch(() => { });
-  }, [product.id]);
-
-  const handleWishlist = async (e) => {
-    e.stopPropagation();
-    if (!isLoggedIn()) { openLoginModal(); return; }
-    try {
-      await toggleWishlist(product.id, wished);
-      setWished(w => !w);
-    } catch {
-      alert("Failed to update wishlist. Please try again.");
-    }
-  };
-
-  const goToProduct = () => {
-    if (product.slug) navigate(`/products/${product.slug}`);
-  };
-
-  const handleEnquiry = (e) => {
-    e.stopPropagation();
-    if (product.slug) navigate(`/products/${product.slug}`);
-  };
-
-  const imgHeight = isMobile ? 120 : 170;
-
-  return (
-    <div
-      onClick={goToProduct}
-      style={{
-        background: "#fff", borderRadius: 10, padding: isMobile ? "8px 8px 10px" : "10px 10px 12px",
-        border: "1px solid #efefef", boxShadow: "0 1px 5px rgba(0,0,0,0.06)",
-        cursor: "pointer", transition: "box-shadow 0.2s, transform 0.2s",
-        display: "flex", flexDirection: "column"
-      }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.11)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-      onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 1px 5px rgba(0,0,0,0.06)"; e.currentTarget.style.transform = "translateY(0)"; }}
-    >
-      <div style={{ position: "relative", marginBottom: 8 }}>
-        <div style={{
-          width: "100%", height: imgHeight, background: "#f5f5f5",
-          borderRadius: 7, overflow: "hidden", display: "flex",
-          alignItems: "center", justifyContent: "center"
-        }}>
-          {image
-            ? <img src={image} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <span style={{ fontSize: 40 }}>🛒</span>
-          }
-        </div>
-        {oldPrice && (
-          <span style={{
-            position: "absolute", top: 6, left: 6, background: "#ff6b35",
-            color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 3
-          }}>
-            {Math.round((1 - price / oldPrice) * 100)}% off
-          </span>
-        )}
-        <button
-          onClick={handleWishlist}
-          style={{
-            position: "absolute", top: 6, right: 6, background: "#fff",
-            border: "none", borderRadius: "50%", width: 26, height: 26,
-            cursor: "pointer", display: "flex", alignItems: "center",
-            justifyContent: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.13)"
-          }}>
-          <HeartIcon filled={wished} />
-        </button>
-      </div>
-
-      <div style={{ fontSize: 10, color: "#2d9e2d", fontWeight: 600, marginBottom: 2 }}>
-        {typeof product.category === "object" ? (product.category?.name || "") : (product.category || "")}
-      </div>
-      <div style={{
-        fontSize: isMobile ? 11 : 12, fontWeight: 700, color: "#1a1a1a",
-        marginBottom: 4, lineHeight: 1.35, minHeight: isMobile ? 28 : 32,
-        overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
-      }}>
-        {name}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
-        <StarRating rating={product.rating || 4} />
-      </div>
-      <div style={{ fontSize: 10, marginBottom: 6, color: isOutOfStock ? "#e74c3c" : isLowStock ? "#e67e22" : "#bbb" }}>
-        {isOutOfStock ? "❌ Out of Stock" : isLowStock ? `⚠️ Only ${stock} left` : `✅ In Stock: ${stock}`}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 8, flexWrap: "wrap" }}>
-        <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 800, color: "#2d9e2d" }}>₹{price.toFixed(2)}</span>
-        {oldPrice && <span style={{ fontSize: 11, color: "#ccc", textDecoration: "line-through" }}>₹{oldPrice.toFixed(2)}</span>}
-        <span style={{ marginLeft: "auto", fontSize: 10, color: "#999" }}>{unit}</span>
-      </div>
-
-      <button
-        onClick={handleEnquiry}
-        disabled={isOutOfStock}
-        style={{
-          width: "100%", padding: "7px 0",
-          background: isOutOfStock ? "#ccc" : "#2d9e2d",
-          color: "#fff", border: "none", borderRadius: 6, fontSize: 11,
-          fontWeight: 700, cursor: isOutOfStock ? "not-allowed" : "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-          transition: "background 0.2s", marginTop: "auto"
-        }}
-        onMouseEnter={e => { if (!isOutOfStock) e.currentTarget.style.background = "#218c21"; }}
-        onMouseLeave={e => { if (!isOutOfStock) e.currentTarget.style.background = "#2d9e2d"; }}
-      >
-        <EnquiryIcon stroke={isOutOfStock ? "#eee" : "#fff"} /> {isOutOfStock ? "Out of Stock" : "Go for Enquiry"}
-      </button>
-    </div>
-  );
-};
-
-// ─── Popular Products (tabs + grid only, flash sale card moved out) ──────────
-const PopularProducts = ({ products, loading }) => {
-  const { isMobile, isTablet } = useResponsive();
-  const [activeTab, setActiveTab] = useState("All");
-  const [categories, setCategories] = useState([]);
-
-  useEffect(() => {
-    fetch(`${API_BASEA}/api/Category/all`)
-      .then(r => r.json())
-      .then(data => {
-        const cats = Array.isArray(data) ? data : data.categories || data.data || [];
-        setCategories(cats.filter(c => c.isActive));
-      })
-      .catch(() => { });
-  }, []);
-
-  const tabLabels = ["All", ...categories.map(c => c.name)];
-
-  const getProductCatId = (p) => {
-    if (!p.category) return "";
-    if (typeof p.category === "object") return p.category.id || "";
-    return p.category;
-  };
-
-  const getDisplayedProducts = () => {
-    if (activeTab === "All") {
-      const result = [];
-      categories.forEach(cat => {
-        products.filter(p => getProductCatId(p) === cat.id).slice(0, 2).forEach(p => result.push(p));
-      });
-      return result.length > 0 ? result.slice(0, 8) : products.slice(0, 8);
-    }
-    const selectedCat = categories.find(c => c.name === activeTab);
-    if (!selectedCat) return [];
-    return products.filter(p => getProductCatId(p) === selectedCat.id).slice(0, 8);
-  };
-
-  const displayedProducts = getDisplayedProducts();
-  const productCols = isMobile ? "repeat(2, 1fr)" : isTablet ? "repeat(3, 1fr)" : "repeat(4, 1fr)";
-
-  return (
-    <section id="popular-product" style={{ marginBottom: isMobile ? 28 : isTablet ? 40 : 72 }}>
-      <SectionHeader title="Popular Products" />
-
-      <div style={{
-        display: "flex", gap: 6, flexWrap: "nowrap", overflowX: "auto",
-        marginBottom: 16, paddingBottom: 2, scrollbarWidth: "none", WebkitOverflowScrolling: "touch"
-      }}>
-        {tabLabels.map(t => (
-          <button key={t} onClick={() => setActiveTab(t)}
-            style={{
-              padding: "5px 14px", borderRadius: 20, fontSize: 12, fontWeight: 500,
-              whiteSpace: "nowrap", flexShrink: 0, cursor: "pointer", transition: "all 0.2s",
-              border: "1px solid " + (activeTab === t ? "#2d9e2d" : "#ddd"),
-              background: activeTab === t ? "#2d9e2d" : "#fff",
-              color: activeTab === t ? "#fff" : "#555",
-            }}
-          >{t}</button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div style={{ display: "grid", gridTemplateColumns: productCols, gap: 10 }}>
-          {[...Array(isMobile ? 4 : 8)].map((_, i) => (
-            <div key={i} style={{ height: 280, background: "#f0f0f0", borderRadius: 8, animation: "pulse 1.4s ease-in-out infinite" }} />
-          ))}
-        </div>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: productCols, gap: 10 }}>
-          {displayedProducts.length > 0
-            ? displayedProducts.map((p, i) => <ProductCard key={p.id || i} product={p} />)
-            : <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 40, color: "#bbb", fontSize: 14 }}>No products found.</div>
-          }
-        </div>
-      )}
     </section>
   );
 };
@@ -667,105 +797,93 @@ const PopularProducts = ({ products, loading }) => {
 // ─── Stats Bar ────────────────────────────────────────────────────────────────
 const StatsBar = () => {
   const { isMobile } = useResponsive();
+  const [visible, setVisible] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold: 0.3 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const stats = [
+    { emoji: "👥", stat: "50K+", label: "Happy Customers", color: "#22c55e" },
+    { emoji: "⚡", stat: "30 min", label: "Fast Delivery", color: "#f59e0b" },
+    { emoji: "🔒", stat: "100%", label: "Secure Payments", color: "#3b82f6" },
+  ];
 
   return (
-    <div style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(3, 1fr)",
-      background: "#f9fdf9",
-      borderRadius: 10,
-      border: "1px solid #e8f5e9",
-      marginBottom: isMobile ? 16 : 28,
+    <div ref={ref} style={{
+      display: "grid", gridTemplateColumns: "repeat(3,1fr)",
+      borderRadius: isMobile ? 20 : 28,
       overflow: "hidden",
+      marginBottom: isMobile ? 44 : 68,
+      background: "linear-gradient(135deg, #f0fdf4, #dcfce7, #f0fdf4)",
+      border: "2px solid #bbf7d0",
+      boxShadow: "0 8px 40px rgba(34,197,94,0.12)",
     }}>
-      {[
-        { emoji: "👥", stat: "90%",  label: "User Positive Feedback" },
-        { emoji: "🕐", stat: "24/7", label: "Online Support"          },
-        { emoji: "🔒", stat: "48+",  label: "Secure Payment Gateways" },
-      ].map((item, i) => (
+      {stats.map((item, i) => (
         <div
           key={i}
+          className="stat-item"
           style={{
-            padding: isMobile ? "12px 6px" : "24px 20px",
-            borderRight: i < 2 ? "1px solid #e8f5e9" : "none",
-            display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: isMobile ? 4 : 14,
-            textAlign: isMobile ? "center" : "left",
+            padding: isMobile ? "20px 10px" : "34px 28px",
+            borderRight: i < 2 ? "2px solid #bbf7d0" : "none",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            textAlign: "center", gap: isMobile ? 5 : 8,
+            position: "relative", overflow: "hidden",
+            cursor: "default",
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(16px)",
+            transition: `opacity 0.5s ease ${i * 0.15}s, transform 0.5s cubic-bezier(.22,1,.36,1) ${i * 0.15}s`,
           }}
         >
-          <span style={{ fontSize: isMobile ? 20 : 32, opacity: 0.7 }}>
-            {item.emoji}
-          </span>
-          <div>
+          {/* Subtle background circle */}
+          <div style={{
+            position: "absolute", top: "50%", left: "50%",
+            transform: "translate(-50%,-50%)",
+            width: 90, height: 90, borderRadius: "50%",
+            background: `radial-gradient(circle, ${item.color}12, transparent)`,
+          }} />
+
+          {/* Emoji with floating */}
+          <span style={{
+            fontSize: isMobile ? 26 : 40,
+            animation: `floatUp ${3 + i * 0.5}s ease-in-out ${i * 0.3}s infinite`,
+          }}>{item.emoji}</span>
+
+          <div style={{
+            fontSize: isMobile ? 20 : 30, fontWeight: 900,
+            color: item.color, lineHeight: 1,
+            animation: visible ? `countUp 0.6s ease ${i * 0.2 + 0.2}s both` : "none",
+            textShadow: `0 2px 12px ${item.color}40`,
+          }}>{item.stat}</div>
+
+          <div style={{
+            fontSize: isMobile ? 10 : 13, color: "#4b5563",
+            fontWeight: 700, lineHeight: 1.3,
+          }}>{item.label}</div>
+
+          {/* Pulse ring */}
+          {visible && (
             <div style={{
-              fontSize: isMobile ? 15 : 22,
-              fontWeight: 800,
-              color: "#2d9e2d",
-              lineHeight: 1.2,
-            }}>
-              {item.stat}
-            </div>
-            <div style={{
-              fontSize: isMobile ? 10 : 12,
-              color: "#666",
-              lineHeight: 1.3,
-              wordBreak: "break-word",
-            }}>
-              {item.label}
-            </div>
-          </div>
+              position: "absolute", width: 24, height: 24, borderRadius: "50%",
+              border: `2px solid ${item.color}`,
+              animation: `pulseRing 2s ease-out ${i * 0.3}s infinite`,
+              opacity: 0,
+            }} />
+          )}
         </div>
       ))}
     </div>
   );
 };
 
-// ─── Just For You ─────────────────────────────────────────────────────────────
-const JustForYou = ({ products, loading }) => {
-  const { isMobile, isTablet } = useResponsive();
-  const [page, setPage] = useState(0);
-  const perPage = 12;
-  const paginated = products.slice(page * perPage, (page + 1) * perPage);
-  const cols = isMobile ? "repeat(2, 1fr)" : isTablet ? "repeat(3, 1fr)" : "repeat(6, 1fr)";
-
-  return (
-    <section style={{ marginBottom: 28 }}>
-      <SectionHeader title="Just For You" />
-      {loading ? (
-        <div style={{ display: "grid", gridTemplateColumns: cols, gap: 10 }}>
-          {[...Array(isMobile ? 4 : 12)].map((_, i) => (
-            <div key={i} style={{ height: 240, background: "#f0f0f0", borderRadius: 8, animation: "pulse 1.4s ease-in-out infinite" }} />
-          ))}
-        </div>
-      ) : (
-        <>
-          <div style={{ display: "grid", gridTemplateColumns: cols, gap: 10 }}>
-            {paginated.map((p, i) => <ProductCard key={p.id || i} product={p} />)}
-          </div>
-          {products.length > perPage && (
-            <div style={{ textAlign: "center", marginTop: 20 }}>
-              <button
-                onClick={() => setPage(pg => pg + 1)}
-                style={{
-                  padding: "10px 40px", background: "#fff", border: "1px solid #2d9e2d",
-                  color: "#2d9e2d", borderRadius: 5, fontWeight: 600, fontSize: 13,
-                  cursor: "pointer", transition: "all 0.2s"
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = "#2d9e2d"; e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#2d9e2d"; }}
-              >Load More Products</button>
-            </div>
-          )}
-        </>
-      )}
-    </section>
-  );
-};
-
-// ─── Root App ─────────────────────────────────────────────────────────────────
+// ─── Root ─────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const { isMobile } = useResponsive();
   const [categories, setCategories] = useState([]);
@@ -778,32 +896,34 @@ export default function HomePage() {
 
   useEffect(() => {
     if (window.location.hash === "#feature-categories") {
-      const timer = setTimeout(() => {
+      setTimeout(() => {
         const el = document.getElementById("feature-categories");
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 150);
-      return () => clearTimeout(timer);
     }
   }, []);
 
   useEffect(() => {
     fetch(`${API_BASEA}/api/Category/all`)
       .then(r => r.json())
-      .then(data => { setCategories(Array.isArray(data) ? data : data.categories || data.data || []); setCatLoading(false); })
+      .then(data => {
+        setCategories(Array.isArray(data) ? data : data.categories || data.data || []);
+        setCatLoading(false);
+      })
       .catch(() => { setCatLoading(false); setError("Could not load categories."); });
 
     const fetchAllProducts = async () => {
       try {
-        let allProducts = [], p = 1, totalPages = 1;
+        let all = [], p = 1, totalPages = 1;
         do {
           const res = await fetch(`${API_BASEA}/api/Products/allFree?page=${p}&limit=100`);
           const data = await res.json();
           const batch = Array.isArray(data) ? data : data.products || data.data || [];
-          allProducts = [...allProducts, ...batch];
+          all = [...all, ...batch];
           totalPages = data.totalPages || 1;
           p++;
         } while (p <= totalPages);
-        setProducts(allProducts);
+        setProducts(all);
       } catch (err) {
         console.error(err);
       } finally {
@@ -827,122 +947,7 @@ export default function HomePage() {
 
   return (
     <>
-      <style>{`
-  * { box-sizing: border-box; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
-  body { font-family: 'Nunito', sans-serif; }
-  ::-webkit-scrollbar { display: none; }
-  button { touch-action: manipulation; }
-  img { max-width: 100%; }
-
-  /* ── Navratri Flash Sale Animations ── */
-  @keyframes navBorderSweep {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 200% 50%; }
-  }
-  @keyframes navBorderGlow {
-    0%,100% { box-shadow: 0 0 0px 0px rgba(255,160,0,0); }
-    50% { box-shadow: 0 0 20px 5px rgba(255,140,0,0.4), 0 0 10px 2px rgba(220,50,50,0.2); }
-  }
-  @keyframes navPetalDrop1 {
-    0%   { transform: translateX(0)   translateY(-10px) rotate(0deg);   opacity: 0.9; }
-    100% { transform: translateX(25px) translateY(90px) rotate(360deg);  opacity: 0; }
-  }
-  @keyframes navPetalDrop2 {
-    0%   { transform: translateX(0)    translateY(-10px) rotate(0deg);   opacity: 0.8; }
-    100% { transform: translateX(-18px) translateY(80px) rotate(-300deg); opacity: 0; }
-  }
-  @keyframes navPetalDrop3 {
-    0%   { transform: translateX(0)   translateY(-10px) rotate(0deg);   opacity: 0.85; }
-    100% { transform: translateX(35px) translateY(85px) rotate(280deg);  opacity: 0; }
-  }
-  @keyframes navDiyaFlicker {
-    0%,100% { opacity: 1;   transform: scaleY(1)    translateX(-50%); }
-    25%      { opacity: .85; transform: scaleY(1.1)  translateX(-50%) rotate(-3deg); }
-    50%      { opacity: .9;  transform: scaleY(0.9)  translateX(-50%) rotate(2deg); }
-    75%      { opacity: .8;  transform: scaleY(1.08) translateX(-50%) rotate(-1deg); }
-  }
-  @keyframes navKalashFloat {
-    0%,100% { transform: translateY(0)   rotate(-3deg); }
-    50%      { transform: translateY(-7px) rotate(3deg);  }
-  }
-  @keyframes navRangoliPulse {
-    0%,100% { opacity: 0.12; }
-    50%      { opacity: 0.22; }
-  }
-  @keyframes navDiyaGlow {
-    0%,100% { filter: drop-shadow(0 0 4px #ffb300) drop-shadow(0 0 8px #ff6600);  }
-    50%      { filter: drop-shadow(0 0 10px #ffb300) drop-shadow(0 0 20px #ff4400); }
-  }
-  @keyframes navLabelPulse {
-    0%,100% { letter-spacing: 2px; opacity: 0.9; }
-    50%      { letter-spacing: 3px; opacity: 1;   }
-  }
-
-  .navratri-wrap {
-    position: relative;
-    border-radius: 18px;
-    padding: 4px;
-    background: linear-gradient(90deg, #c62828, #f57f17, #e65100, #ad1457, #c62828);
-    background-size: 200% auto;
-    animation: navBorderSweep 3s linear infinite, navBorderGlow 2.5s ease-in-out infinite;
-  }
-  .navratri-inner {
-    border-radius: 15px;
-    overflow: hidden;
-    position: relative;
-  }
-  .navratri-corner-diya {
-    position: absolute;
-    bottom: 0;
-    z-index: 4;
-    animation: navDiyaGlow 1.8s ease-in-out infinite;
-  }
-  .navratri-corner-diya .nav-flame {
-    position: absolute;
-    bottom: 26px;
-    left: 50%;
-    width: 7px;
-    height: 12px;
-    background: radial-gradient(ellipse at bottom, #ffeb3b 0%, #ff9800 55%, #f44336 100%);
-    border-radius: 50% 50% 30% 30%;
-    transform-origin: bottom center;
-    animation: navDiyaFlicker 0.9s ease-in-out infinite;
-    transform: translateX(-50%);
-  }
-  .navratri-kalash {
-    position: absolute;
-    top: -10px;
-    z-index: 4;
-    animation: navKalashFloat 3s ease-in-out infinite;
-  }
-  .navratri-petal {
-    position: absolute;
-    width: 9px;
-    height: 13px;
-    border-radius: 50% 50% 50% 0;
-    z-index: 3;
-    pointer-events: none;
-  }
-  .navratri-rangoli-bg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    animation: navRangoliPulse 3s ease-in-out infinite;
-  }
-  .navratri-top-label {
-    text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: #c62828;
-    letter-spacing: 2px;
-    padding: 6px 0 3px;
-    animation: navLabelPulse 2s ease-in-out infinite;
-  }
-`}</style>
+      <GlobalStyles />
 
       {page === "flash" && (
         <FlashSalePage flashSaleId={flashSaleId} onBack={handleBack} />
@@ -950,105 +955,27 @@ export default function HomePage() {
 
       {page === null && (
         <div style={{
-          maxWidth: 1400, margin: "0 auto",
-          padding: isMobile ? "10px 10px 0" : "16px 16px 0"
+          maxWidth: 1440, margin: "0 auto",
+          padding: isMobile ? "14px 12px 0" : "24px 24px 0",
+          background: "transparent",
         }}>
+          {/* Error */}
           {error && (
             <div style={{
-              background: "#fff3cd", border: "1px solid #ffc107", borderRadius: 6,
-              padding: "10px 14px", marginBottom: 14, fontSize: 13, color: "#856404"
-            }}>⚠️ {error}</div>
+              background: "linear-gradient(135deg,#fef9c3,#fef08a)",
+              border: "1.5px solid #fde047",
+              borderRadius: 14, padding: "12px 16px", marginBottom: 20,
+              fontSize: 13, color: "#713f12", fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 8,
+            }}>
+              ⚠️ {error}
+            </div>
           )}
+
           <HeroBanner />
           <FeatureCategories categories={categories} loading={catLoading} products={products} />
-
-{/* ── Navratri Flash Sale Section ── */}
-<div>
-  <div className="navratri-top-label">✦ &nbsp;नवरात्रि स्पेशल&nbsp; ✦</div>
-  <div className="navratri-wrap">
-    <div className="navratri-inner" style={{ position: "relative" }}>
-
-      {/* Rangoli SVG background */}
-      <svg className="navratri-rangoli-bg" viewBox="0 0 800 140" preserveAspectRatio="xMidYMid slice" style={{ position: "absolute", inset: 0 }}>
-        <g stroke="#ff9800" strokeWidth="0.8" fill="none">
-          <circle cx="400" cy="70" r="55"/><circle cx="400" cy="70" r="40"/><circle cx="400" cy="70" r="25"/>
-          <line x1="345" y1="70" x2="455" y2="70"/><line x1="400" y1="15" x2="400" y2="125"/>
-          <line x1="361" y1="31" x2="439" y2="109"/><line x1="439" y1="31" x2="361" y2="109"/>
-          <polygon points="400,30 420,58 455,58 430,76 440,108 400,90 360,108 370,76 345,58 380,58" stroke="#e91e63" strokeWidth="0.6"/>
-          <circle cx="120" cy="70" r="38"/><line x1="82" y1="70" x2="158" y2="70"/><line x1="120" y1="32" x2="120" y2="108"/>
-          <circle cx="680" cy="70" r="38"/><line x1="642" y1="70" x2="718" y2="70"/><line x1="680" y1="32" x2="680" y2="108"/>
-        </g>
-      </svg>
-
-      {/* Falling flower petals */}
-      {[
-        { left: "8%",  top: "5px",  bg: "#e91e63", anim: "navPetalDrop1 2.8s ease-in infinite" },
-        { left: "20%", top: "2px",  bg: "#ff9800", anim: "navPetalDrop2 3.2s ease-in infinite 0.6s" },
-        { left: "35%", top: "6px",  bg: "#f44336", anim: "navPetalDrop3 2.5s ease-in infinite 1.2s" },
-        { left: "60%", top: "3px",  bg: "#ff5722", anim: "navPetalDrop1 3.0s ease-in infinite 0.4s" },
-        { left: "78%", top: "7px",  bg: "#e91e63", anim: "navPetalDrop2 2.7s ease-in infinite 0.9s" },
-        { left: "90%", top: "4px",  bg: "#ff9800", anim: "navPetalDrop3 3.1s ease-in infinite 1.5s" },
-      ].map((p, i) => (
-        <div key={i} className="navratri-petal" style={{ left: p.left, top: p.top, background: p.bg, animation: p.anim }} />
-      ))}
-
-      {/* Left Diya */}
-      <div className="navratri-corner-diya" style={{ left: 14 }}>
-        <svg width="34" height="42" viewBox="0 0 34 42">
-          <ellipse cx="17" cy="34" rx="15" ry="7" fill="#e65100" opacity="0.9"/>
-          <ellipse cx="17" cy="31" rx="11" ry="5" fill="#f57f17"/>
-          <ellipse cx="17" cy="29" rx="8"  ry="3.5" fill="#ffb74d"/>
-          <ellipse cx="17" cy="28" rx="5"  ry="2.5" fill="#ffe082"/>
-          <rect x="15" y="18" width="4" height="11" rx="2" fill="#ffe082"/>
-        </svg>
-        <div className="nav-flame" />
-      </div>
-
-      {/* Right Diya */}
-      <div className="navratri-corner-diya" style={{ right: 14 }}>
-        <svg width="34" height="42" viewBox="0 0 34 42">
-          <ellipse cx="17" cy="34" rx="15" ry="7" fill="#e65100" opacity="0.9"/>
-          <ellipse cx="17" cy="31" rx="11" ry="5" fill="#f57f17"/>
-          <ellipse cx="17" cy="29" rx="8"  ry="3.5" fill="#ffb74d"/>
-          <ellipse cx="17" cy="28" rx="5"  ry="2.5" fill="#ffe082"/>
-          <rect x="15" y="18" width="4" height="11" rx="2" fill="#ffe082"/>
-        </svg>
-        <div className="nav-flame" style={{ animationDelay: "0.35s" }} />
-      </div>
-
-      {/* Left Kalash */}
-      <div className="navratri-kalash" style={{ left: 60 }}>
-        <svg width="26" height="34" viewBox="0 0 26 34">
-          <ellipse cx="13" cy="26" rx="11" ry="6" fill="#f57f17" opacity="0.9"/>
-          <path d="M4,26 Q3,18 7,12 Q13,5 19,12 Q23,18 22,26 Z" fill="#ff9800"/>
-          <ellipse cx="13" cy="12" rx="5" ry="3" fill="#ffb74d"/>
-          <rect x="11" y="4" width="4" height="8" rx="2" fill="#f57f17"/>
-          <ellipse cx="13" cy="4" rx="4" ry="2" fill="#ffe082"/>
-        </svg>
-      </div>
-
-      {/* Right Kalash */}
-      <div className="navratri-kalash" style={{ right: 60, animationDelay: "0.9s" }}>
-        <svg width="26" height="34" viewBox="0 0 26 34">
-          <ellipse cx="13" cy="26" rx="11" ry="6" fill="#f57f17" opacity="0.9"/>
-          <path d="M4,26 Q3,18 7,12 Q13,5 19,12 Q23,18 22,26 Z" fill="#ff9800"/>
-          <ellipse cx="13" cy="12" rx="5" ry="3" fill="#ffb74d"/>
-          <rect x="11" y="4" width="4" height="8" rx="2" fill="#f57f17"/>
-          <ellipse cx="13" cy="4" rx="4" ry="2" fill="#ffe082"/>
-        </svg>
-      </div>
-
-      {/* Actual Flash Sale Banner */}
-      <FlashSaleBanner onFlashSaleClick={handleFlashSaleClick} />
-    </div>
-  </div>
-</div>
-{/* ── End Navratri Section ── */}
-
-          <PopularProducts products={products} loading={prodLoading} />
           <PromoBanners />
           <StatsBar />
-          <JustForYou products={products} loading={prodLoading} />
         </div>
       )}
     </>

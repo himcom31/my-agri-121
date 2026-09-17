@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../../models/User/User');
+const UserSubscription = require('../../models/UserSubscription'); // ⚠️ path apni actual folder structure ke hisaab se confirm kar lein
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
@@ -47,7 +48,6 @@ const register = async (req, res) => {
         }
 
         const phoneExists = await User.findOne({ phone: phone.replace(/\D/g, '') });
-
         if (phoneExists) {
             return res.status(409).json({
                 success: false,
@@ -55,13 +55,91 @@ const register = async (req, res) => {
             });
         }
 
-        const user = await User.create({ fullName, country, phone: phone.replace(/\D/g, ''), email, password });
+        // Account is inactive until plan purchase is complete
+        const user = await User.create({
+            fullName,
+            country,
+            phone: phone.replace(/\D/g, ''),
+            email,
+            password,
+            isActive: false,
+        });
 
         const token = generateToken(user.id);
 
+        // Send welcome email with login credentials
+        try {
+            const transporter = nodemailer.createTransport({
+                host: process.env.EMAIL_HOST,   // smtp.hostinger.com
+                port: parseInt(process.env.EMAIL_PORT), // 465
+                secure: true,                     // true for port 465
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS,
+                },
+            });
+
+            await transporter.sendMail({
+                from: `"Maharashtra Bazaar" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject: 'Welcome to Maharashtra Bazaar — Your Account Details',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px;">
+
+                        <h2 style="color: #16a34a; margin-bottom: 4px;">Maharashtra Bazaar</h2>
+
+                        <p style="color: #374151;">Hi <strong>${fullName}</strong>, welcome to Maharashtra Bazaar! 🎉</p>
+                        <p style="color: #374151;">Your account has been successfully created. Below are your login credentials:</p>
+
+                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px 20px; margin: 20px 0;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 6px 0; color: #6b7280; font-size: 13px; width: 120px;">Full Name</td>
+                                    <td style="padding: 6px 0; color: #111; font-weight: 700; font-size: 13px;">${fullName}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Email</td>
+                                    <td style="padding: 6px 0; color: #111; font-weight: 700; font-size: 13px;">${email}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Phone</td>
+                                    <td style="padding: 6px 0; color: #111; font-weight: 700; font-size: 13px;">${phone}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Password</td>
+                                    <td style="padding: 6px 0; color: #111; font-weight: 700; font-size: 13px;">${password}</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <p style="color: #374151; font-size: 13px;">
+                            To activate your account, please log in and complete your subscription plan purchase.
+                        </p>
+
+                        <p style="color: #ef4444; font-size: 13px;">
+                            ⚠️ Do not share your password with anyone. We recommend changing it after your first login.
+                        </p>
+
+                        <a href="${process.env.FRONTEND_URL}"
+                           style="display: inline-block; margin: 10px 0 20px; padding: 12px 28px; background-color: #16a34a; color: white; text-decoration: none; border-radius: 999px; font-weight: 600; font-size: 14px;">
+                            Visit Website
+                        </a>
+
+                        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+                        <p style="color: #9ca3af; font-size: 12px;">
+                            © Maharashtra Bazaar. If you did not create this account, please ignore this email or contact support.
+                        </p>
+                    </div>
+                `,
+            });
+        } catch (emailErr) {
+            // Do not block registration if email fails — just log the error
+            console.error('Welcome email send failed:', emailErr.message);
+        }
+
         return res.status(201).json({
             success: true,
-            message: 'Account created successfully.',
+            message: 'Account created successfully. Please select a plan to activate it.',
             token,
             user: sanitizeUser(user),
         });
@@ -98,16 +176,32 @@ const login = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Invalid credentials.' });
         }
 
-        if (!user.isActive) {
-            return res.status(403).json({
-                success: false,
-                message: 'Your account has been deactivated. Please contact support.',
-            });
-        }
-
         const isMatch = await User.matchPassword(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ success: false, message: 'Invalid credentials.' });
+        }
+
+        // ── Subscription status check ──
+        const latestSub = await UserSubscription.getLatestForUser(user.id);
+
+        // Kabhi bhi plan purchase complete nahi hua — signup beech mein chhod diya tha
+        if (!latestSub || latestSub.status === 'pending' || latestSub.status === 'failed') {
+            return res.status(403).json({
+                success: false,
+                message: 'Please complete your subscription plan purchase to activate your account.',
+                needsPlanPurchase: true,
+            });
+        }
+
+        // Plan kabhi active tha, ab expire ho chuka hai ya check karna hai
+        const now = new Date();
+        const isExpired = latestSub.status === 'expired' ||
+            (latestSub.status === 'active' && new Date(latestSub.endDate) < now);
+
+        if (isExpired && user.isActive) {
+            // Safety-net — daily cron abhi tak nahi chala shayad
+            await User.findByIdAndUpdate(user.id, { isActive: false });
+            user.isActive = false;
         }
 
         const token = generateToken(user.id);
@@ -117,6 +211,8 @@ const login = async (req, res) => {
             message: 'Logged in successfully.',
             token,
             user: sanitizeUser(user),
+            needsRenewal: isExpired,
+            planExpiry: latestSub.endDate,
         });
 
     } catch (error) {
@@ -139,9 +235,9 @@ const getMe = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         const { fullName, country, phone, gender, dateOfBirth } = req.body;
-         console.log("REQ BODY:", req.body);
-    console.log("REQ FILE:", req.file);  // ← image aa rahi hai ya nahi
-    console.log("REQ HEADERS:", req.headers['content-type']);
+        console.log("REQ BODY:", req.body);
+        console.log("REQ FILE:", req.file);  // ← image aa rahi hai ya nahi
+        console.log("REQ HEADERS:", req.headers['content-type']);
 
         // Only update avatar if a new file was actually uploaded
         const avatarUrl = req.file ? req.file.path : undefined;
@@ -251,13 +347,13 @@ const forgotPassword = async (req, res) => {
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
         const transporter = nodemailer.createTransport({
-          host: process.env.EMAIL_HOST,      // smtp.hostinger.com
-          port: parseInt(process.env.EMAIL_PORT),  // 465
-          secure: true,                      // true for port 465
-          auth: {
-            user: process.env.EMAIL_USER,    // support@kolkatakart.in
-            pass: process.env.EMAIL_PASS,    // Kolkatakart@04
-          },
+            host: process.env.EMAIL_HOST,      // smtp.hostinger.com
+            port: parseInt(process.env.EMAIL_PORT),  // 465
+            secure: true,                      // true for port 465
+            auth: {
+                user: process.env.EMAIL_USER,    // support@kolkatakart.in
+                pass: process.env.EMAIL_PASS,    // Kolkatakart@04
+            },
         });
 
         await transporter.sendMail({
@@ -328,4 +424,4 @@ const resetPassword = async (req, res) => {
     }
 };
 
-module.exports = { register, login, getMe, updateProfile, changePassword ,forgotPassword,resetPassword};
+module.exports = { register, login, getMe, updateProfile, changePassword, forgotPassword, resetPassword };

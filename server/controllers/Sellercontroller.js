@@ -217,7 +217,6 @@ const registerSeller = async (req, res) => {
       shopName, shopCategory, shopStreet, shopCity, shopState, shopPincode,
       deliveryCharge, shopDescription,
       panNumber, aadharNumber,
-      upiId, upiMobile,
       sameAsShop, pickupStreet, pickupCity, pickupState, pickupPincode,
       workingHoursFrom, workingHoursTo,
       termsAccepted, commissionAccepted,
@@ -225,10 +224,10 @@ const registerSeller = async (req, res) => {
 
     // ── Validate required fields ───────────────────────────────────
     const requiredFields = {
-      fullName, email, mobile, password,
-      shopName, shopCategory, shopStreet, shopCity, shopState, shopPincode,
-      panNumber, aadharNumber, upiId, upiMobile,
-    };
+  fullName, email, mobile, password,
+  shopName, shopCategory, shopStreet, shopCity, shopState, shopPincode,
+  panNumber, aadharNumber,
+};
     const missing = Object.keys(requiredFields).filter(
       (k) => !requiredFields[k] || String(requiredFields[k]).trim() === ""
     );
@@ -301,15 +300,14 @@ const registerSeller = async (req, res) => {
     // ── Insert seller record ───────────────────────────────────────
     await pool.execute(
       `INSERT INTO sellers (
-        full_name, email, mobile, password_hash, dob,
-        shop_name, shop_category, shop_street, shop_city, shop_state, shop_pincode,
-        delivery_charge, shop_description,
-        pan_number, aadhar_number, pan_card_url,
-        upi_id, upi_mobile,
-        same_as_shop, pickup_street, pickup_city, pickup_state, pickup_pincode,
-        working_hours_from, working_hours_to,
-        terms_accepted, commission_accepted
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+  full_name, email, mobile, password_hash, dob,
+  shop_name, shop_category, shop_street, shop_city, shop_state, shop_pincode,
+  delivery_charge, shop_description,
+  pan_number, aadhar_number, pan_card_url,
+  same_as_shop, pickup_street, pickup_city, pickup_state, pickup_pincode,
+  working_hours_from, working_hours_to,
+  terms_accepted, commission_accepted
+) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         fullName.trim(),
         email.trim().toLowerCase(),
@@ -327,8 +325,6 @@ const registerSeller = async (req, res) => {
         panNumber.toUpperCase().trim(),
         maskedAadhar,                               // store masked Aadhar
         panCardUrl,
-        upiId.trim(),
-        upiMobile.trim(),
         sameAsShopBool,
         sameAsShopBool ? shopStreet.trim()   : (pickupStreet  ? pickupStreet.trim()  : null),
         sameAsShopBool ? shopCity.trim()     : (pickupCity    ? pickupCity.trim()    : null),
@@ -476,7 +472,6 @@ const getProfile = async (req, res) => {
          shop_name, shop_category,
          shop_street, shop_city, shop_state, shop_pincode,
          delivery_charge, shop_description,
-         upi_id, upi_mobile,
          same_as_shop,
          pickup_street, pickup_city, pickup_state, pickup_pincode,
          working_hours_from, working_hours_to,
@@ -512,7 +507,6 @@ const updateProfile = async (req, res) => {
       shopName, shopCategory,
       shopStreet, shopCity, shopState, shopPincode,
       deliveryCharge, shopDescription,
-      upiId, upiMobile,
       sameAsShop, pickupStreet, pickupCity, pickupState, pickupPincode,
       workingHoursFrom, workingHoursTo,
     } = req.body;
@@ -532,8 +526,6 @@ const updateProfile = async (req, res) => {
         shop_pincode       = COALESCE(?, shop_pincode),
         delivery_charge    = COALESCE(?, delivery_charge),
         shop_description   = COALESCE(?, shop_description),
-        upi_id             = COALESCE(?, upi_id),
-        upi_mobile         = COALESCE(?, upi_mobile),
         same_as_shop       = ?,
         pickup_street      = COALESCE(?, pickup_street),
         pickup_city        = COALESCE(?, pickup_city),
@@ -554,8 +546,6 @@ const updateProfile = async (req, res) => {
         shopPincode?.trim()    || null,
         deliveryCharge != null ? parseFloat(deliveryCharge) : null,
         shopDescription?.trim() || null,
-        upiId?.trim()          || null,
-        upiMobile?.trim()      || null,
         sameAsShopBool,
         pickupStreet?.trim()   || null,
         pickupCity?.trim()     || null,

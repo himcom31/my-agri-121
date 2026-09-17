@@ -472,12 +472,20 @@ const UserNavbar = () => {
 
   const openLogin = () => { setAuthMode('login'); setShowAuth(true); };
 
-  const handleLoginSuccess = useCallback((token) => {
-    localStorage.setItem('userToken', token);
-    setIsLoggedIn(true);
-    setShowAuth(false);
+  const handleLoginSuccess = useCallback((token, user, needsRenewal) => {
+  localStorage.setItem('userToken', token);
+  if (user) localStorage.setItem('userInfo', JSON.stringify(user));
+  setIsLoggedIn(true);
+  setShowAuth(false);
+  if (needsRenewal) {
+    // Global event fire karo taaki App.jsx sun sake
+    window.dispatchEvent(new CustomEvent('user-needs-renewal', {
+      detail: { token, user }
+    }));
+  } else {
     navigate('/');
-  }, [navigate]);
+  }
+}, [navigate]);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('userToken');

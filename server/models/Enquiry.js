@@ -4,17 +4,19 @@ const { pool } = require('../config/db');
 const createEnquiryTable = async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS enquiries (
-      id          INT AUTO_INCREMENT PRIMARY KEY,
-      product_id  INT          NOT NULL,
-      variant_id  INT          DEFAULT NULL,
-      seller_id   INT          DEFAULT NULL,
-      buyer_id    INT          DEFAULT NULL,
-      buyer_name  VARCHAR(150) NOT NULL,
-      buyer_phone VARCHAR(20)  NOT NULL,
-      buyer_email VARCHAR(150) DEFAULT NULL,
-      message     TEXT         DEFAULT NULL,
-      status      ENUM('New','Contacted','Closed') DEFAULT 'New',
-      createdAt   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+      id                  INT AUTO_INCREMENT PRIMARY KEY,
+      product_id          INT           NOT NULL,
+      variant_id          INT           DEFAULT NULL,
+      seller_id           INT           DEFAULT NULL,
+      buyer_id            INT           DEFAULT NULL,
+      buyer_name          VARCHAR(150)  NOT NULL,
+      buyer_phone         VARCHAR(20)   NOT NULL,
+      buyer_email         VARCHAR(150)  DEFAULT NULL,
+      message             TEXT          DEFAULT NULL,
+      buyer_address       TEXT          DEFAULT NULL,
+      buyer_location_url  VARCHAR(500)  DEFAULT NULL,
+      status              ENUM('New','Contacted','Closed') DEFAULT 'New',
+      createdAt           TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
       FOREIGN KEY (buyer_id)   REFERENCES users(id)    ON DELETE SET NULL
     )
@@ -25,19 +27,19 @@ createEnquiryTable();
 const BASE_SELECT = `
   SELECT
     e.*,
-    p.name         AS productName,
-    p.thumbnail    AS productImage,
-    p.sellingPrice AS productPrice,
-    p.unit         AS productUnit,
-    pv.label       AS variantLabel,
+    p.name          AS productName,
+    p.thumbnail     AS productImage,
+    p.sellingPrice  AS productPrice,
+    p.unit          AS productUnit,
+    pv.label        AS variantLabel,
     pv.sellingPrice AS variantPrice,
-    s.full_name    AS sellerName,
-    s.shop_name    AS shopName,
+    s.full_name     AS sellerName,
+    s.shop_name     AS shopName,
     s.shop_category AS shopCategory,
-    s.mobile       AS sellerWhatsapp,
-    s.email        AS sellerEmail,
-    s.shop_city    AS shopCity,
-    s.shop_state   AS shopState
+    s.mobile        AS sellerWhatsapp,
+    s.email         AS sellerEmail,
+    s.shop_city     AS shopCity,
+    s.shop_state    AS shopState
   FROM enquiries e
   LEFT JOIN products         p  ON p.id  = e.product_id
   LEFT JOIN product_variants pv ON pv.id = e.variant_id
@@ -53,10 +55,12 @@ const shape = (row) => {
     createdAt: row.createdAt,
 
     buyer: {
-      id:    row.buyer_id ?? null,
-      name:  row.buyer_name,
-      phone: row.buyer_phone,
-      email: row.buyer_email ?? null,
+      id:          row.buyer_id      ?? null,
+      name:        row.buyer_name,
+      phone:       row.buyer_phone,
+      email:       row.buyer_email   ?? null,
+      address:     row.buyer_address ?? null,
+      locationUrl: row.buyer_location_url ?? null,
     },
 
     product: {
@@ -88,15 +92,32 @@ const shape = (row) => {
 
 const Enquiry = {
 
-  // ── Buyer: create enquiry (buyer_id optional — set when user is logged in) ──
+  // ── Buyer: create enquiry ─────────────────────────────────────────────────
   create: async (data) => {
-    const { productId, variantId, sellerId, buyerId, name, phone, email, message } = data;
+    const {
+      productId, variantId, sellerId, buyerId,
+      name, phone, email, message,
+      address, locationUrl,
+    } = data;
+
     const [result] = await pool.query(
       `INSERT INTO enquiries
-         (product_id, variant_id, seller_id, buyer_id, buyer_name, buyer_phone, buyer_email, message)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [productId, variantId ?? null, sellerId ?? null, buyerId ?? null,
-       name, phone, email ?? null, message ?? null]
+         (product_id, variant_id, seller_id, buyer_id,
+          buyer_name, buyer_phone, buyer_email, message,
+          buyer_address, buyer_location_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        productId,
+        variantId    ?? null,
+        sellerId     ?? null,
+        buyerId      ?? null,
+        name,
+        phone,
+        email        ?? null,
+        message      ?? null,
+        address      ?? null,
+        locationUrl  ?? null,
+      ]
     );
     return result.insertId;
   },
@@ -128,6 +149,7 @@ const Enquiry = {
       where.push(`e.status = ?`);
       vals.push(status);
     }
+
     if (search?.trim()) {
       where.push(`(
         e.buyer_name  LIKE ? OR

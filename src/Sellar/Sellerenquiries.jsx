@@ -4,7 +4,7 @@ import {
   MessageCircle, RefreshCw, Search, X,
   ChevronDown, Package, Phone, Mail,
   Clock, CheckCircle, XCircle, AlertCircle,
-  User, ShoppingBag,
+  User, MapPin, Navigation,
 } from "lucide-react";
 
 const API = import.meta.env.VITE_API_URL;
@@ -118,7 +118,7 @@ function EnquirySheet({ enquiry, onClose, onStatusChange, updating }) {
 
         <div style={{ padding: "0 14px 40px", display: "flex", flexDirection: "column", gap: 10 }}>
 
-          {/* ── Buyer Details (full info for seller) ── */}
+          {/* ── Buyer Details ── */}
           <div style={card}>
             <div style={cardTitle}>👤 Buyer Details</div>
             <InfoRow label="Name"  value={buyer.name} />
@@ -161,6 +161,51 @@ function EnquirySheet({ enquiry, onClose, onStatusChange, updating }) {
               )}
             </div>
           </div>
+
+          {/* ── ✅ NEW: Delivery Address + Location ── */}
+          {(buyer.address || buyer.locationUrl) && (
+            <div style={card}>
+              <div style={cardTitle}>
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <MapPin size={12} color="#16a34a" />
+                  Delivery Address
+                </span>
+              </div>
+
+              {/* Text address */}
+              {buyer.address && (
+                <div style={{
+                  padding: "12px 14px",
+                  fontSize: 13, color: "#374151", lineHeight: 1.7,
+                  borderBottom: buyer.locationUrl ? "1px solid #f0f0f0" : "none",
+                }}>
+                  {buyer.address}
+                </div>
+              )}
+
+              {/* Google Maps location link */}
+              {buyer.locationUrl && (
+                <div style={{ padding: "10px 14px" }}>
+                  <a
+                    href={buyer.locationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                      padding: "10px 0",
+                      background: "#f0fdf4", color: "#16a34a",
+                      border: "1.5px solid #bbf7d0",
+                      borderRadius: 10, fontSize: 13, fontWeight: 700,
+                      textDecoration: "none",
+                    }}
+                  >
+                    <Navigation size={14} />
+                    📍 Open Buyer Location on Google Maps
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── Product Details ── */}
           <div style={card}>
@@ -354,6 +399,19 @@ function EnquiryCard({ enquiry, onClick }) {
             <Phone size={11} color="#9ca3af" />
             <span style={{ fontSize: 11, color: "#6b7280" }}>{buyer.phone || "—"}</span>
           </div>
+
+          {/* ✅ Address preview on card */}
+          {buyer.address && (
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 5, marginTop: 4 }}>
+              <MapPin size={11} color="#16a34a" style={{ marginTop: 1, flexShrink: 0 }} />
+              <span style={{
+                fontSize: 11, color: "#6b7280",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 220,
+              }}>
+                {buyer.address}
+              </span>
+            </div>
+          )}
 
           <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 3 }}>
             {fmt(enquiry.createdAt)}
