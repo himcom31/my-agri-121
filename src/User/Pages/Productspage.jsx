@@ -1,5 +1,6 @@
 // src/Pages/ProductsPage.jsx
 // ✅ OLX-style: Cart hata diya — sirf Wishlist + "Go for Enquiry" (detail page navigate)
+// ✅ Customer Rating + Price Range filters removed
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -33,7 +34,6 @@ const SortIcon    = (p) => <Icon size={p.size||16} d={["M3 6h18","M7 12h10","M10
 const TagIcon     = (p) => <Icon size={p.size||14} d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" {...p}/>;
 const PackageIcon = (p) => <Icon size={p.size||14} d={["M16.5 9.4l-9-5.19","M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z","M3.27 6.96L12 12.01l8.73-5.05","M12 22.08V12"]} {...p}/>;
 const CloseIcon   = (p) => <Icon size={p.size||20} d="M18 6L6 18M6 6l12 12" {...p}/>;
-// Enquiry / chat bubble icon
 const EnquiryIcon = (p) => <Icon size={p.size||14} d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" {...p}/>;
 
 // ─── Star Rating ──────────────────────────────────────────────────────────────
@@ -80,37 +80,7 @@ const CheckRow = ({ label, count, checked, onChange }) => (
   </label>
 );
 
-// ─── Price Range Slider ───────────────────────────────────────────────────────
-const PriceSlider = ({ min, max, value, onChange }) => {
-  const [localVal, setLocalVal] = useState(value);
-  useEffect(() => setLocalVal(value), [value]);
-  const pct = ((localVal - min) / (max - min)) * 100;
-  return (
-    <div>
-      <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
-        <span style={{ fontSize:12, color:"#888" }}>₹{min}</span>
-        <span style={{ fontSize:13, fontWeight:700, color:"#2d9e2d" }}>Up to ₹{localVal}</span>
-        <span style={{ fontSize:12, color:"#888" }}>₹{max}</span>
-      </div>
-      <div style={{ position:"relative", height:24, display:"flex", alignItems:"center" }}>
-        <div style={{ position:"absolute", left:0, right:0, height:4, background:"#e8e8e8", borderRadius:2 }}/>
-        <div style={{ position:"absolute", left:0, width:pct+"%", height:4, background:"#2d9e2d", borderRadius:2 }}/>
-        <input type="range" min={min} max={max} value={localVal}
-          onChange={e => setLocalVal(Number(e.target.value))}
-          onMouseUp={() => onChange(localVal)} onTouchEnd={() => onChange(localVal)}
-          style={{ position:"absolute", width:"100%", opacity:0, cursor:"pointer", height:24, zIndex:2 }}/>
-        <div style={{
-          position:"absolute", left:`calc(${pct}% - 12px)`,
-          width:24, height:24, borderRadius:"50%", background:"#2d9e2d",
-          border:"3px solid #fff", boxShadow:"0 1px 6px rgba(45,158,45,0.4)", pointerEvents:"none",
-        }}/>
-      </div>
-    </div>
-  );
-};
-
-// ─── Product Card (inline — used inside ProductsPage) ─────────────────────────
-// Cart bilkul nahi — sirf Wishlist heart + "Go for Enquiry" button
+// ─── Product Card ─────────────────────────────────────────────────────────────
 const ProductCard = ({ product, view = "grid", isMobile = false, onUnwish }) => {
   const [wished, setWished] = useState(false);
   const navigate = useNavigate();
@@ -174,7 +144,6 @@ const ProductCard = ({ product, view = "grid", isMobile = false, onUnwish }) => 
         onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 6px 22px rgba(0,0,0,0.11)";e.currentTarget.style.transform="translateY(-2px)";}}
         onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 1px 6px rgba(0,0,0,0.05)";e.currentTarget.style.transform="translateY(0)";}}
       >
-        {/* Thumbnail */}
         <div style={{ position:"relative", width:isMobile?90:120, height:isMobile?90:120, flexShrink:0, borderRadius:8, overflow:"hidden", background:"#f8f8f8" }}>
           {image
             ? <img src={image} alt={name} style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
@@ -182,8 +151,6 @@ const ProductCard = ({ product, view = "grid", isMobile = false, onUnwish }) => 
           }
           {discount && <span style={{ position:"absolute", top:4, left:4, background:"#ff6b35", color:"#fff", fontSize:8, fontWeight:800, padding:"2px 5px", borderRadius:3 }}>{discount}%</span>}
         </div>
-
-        {/* Info */}
         <div style={{ flex:1, display:"flex", flexDirection:"column", gap:3, minWidth:0 }}>
           <div style={{ fontSize:10, color:"#2d9e2d", fontWeight:600 }}>{catName}</div>
           <div style={{ fontSize:isMobile?12:14, fontWeight:700, color:"#1a1a1a", lineHeight:1.35, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>{name}</div>
@@ -198,8 +165,6 @@ const ProductCard = ({ product, view = "grid", isMobile = false, onUnwish }) => 
             )}
           </div>
         </div>
-
-        {/* Actions */}
         <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", justifyContent:"space-between", flexShrink:0, gap:6 }}>
           <button onClick={handleWishlist} style={{ background:"none", border:"none", cursor:"pointer", padding:4 }}>
             <HeartIcon filled={wished} size={isMobile?16:18} stroke={wished?"#e74c3c":"#ccc"}/>
@@ -285,8 +250,6 @@ const ProductCard = ({ product, view = "grid", isMobile = false, onUnwish }) => 
             <span style={{ fontSize:10, color:"#ccc", textDecoration:"line-through" }}>₹{oldPrice.toFixed(2)}</span>
           )}
         </div>
-
-        {/* Go for Enquiry button */}
         <button
           onClick={handleEnquiry}
           disabled={!inStock}
@@ -347,20 +310,12 @@ const SORT_OPTIONS = [
   { value:"name-desc",  label:"Name: Z–A" },
 ];
 
-const RATING_OPTIONS = [
-  { value:4, label:"4★ & above" },
-  { value:3, label:"3★ & above" },
-  { value:2, label:"2★ & above" },
-];
-
 const DISCOUNT_OPTIONS = [
   { value:10, label:"10% or more" },
   { value:25, label:"25% or more" },
   { value:50, label:"50% or more" },
   { value:70, label:"70% or more" },
 ];
-
-const MAX_PRICE = 1000;
 
 // ─── Category Row Header ──────────────────────────────────────────────────────
 const CategoryRowHeader = ({ name, totalCount, onViewAll }) => (
@@ -380,12 +335,11 @@ const CategoryRowHeader = ({ name, totalCount, onViewAll }) => (
   </div>
 );
 
-// ─── Filter Panel (drawer on mobile, sidebar on desktop) ─────────────────────
+// ─── Filter Panel ─────────────────────────────────────────────────────────────
+// Rating + Price filters removed — sirf Categories, Discount, Availability
 const FilterPanel = ({
   isMobile, open, onClose,
   categories, catLoading, catCounts, selectedCats, toggleCat,
-  maxPrice, priceMax, setMaxPrice,
-  minRating, setMinRating,
   minDiscount, setMinDiscount,
   inStockOnly, setInStockOnly,
   onSaleOnly, setOnSaleOnly,
@@ -411,6 +365,7 @@ const FilterPanel = ({
         </div>
       </div>
 
+      {/* Categories */}
       <FilterSection title="Categories" icon={<PackageIcon size={13} stroke="#2d9e2d"/>}>
         {catLoading ? (
           [...Array(5)].map((_,i) => <div key={i} style={{ height:24, background:"#f0f0f0", borderRadius:4, marginBottom:6, animation:"shimmer 1.4s ease-in-out infinite" }}/>)
@@ -426,30 +381,7 @@ const FilterPanel = ({
         )}
       </FilterSection>
 
-      <FilterSection title="Price Range" icon={<TagIcon size={13} stroke="#2d9e2d"/>}>
-        <PriceSlider min={0} max={priceMax||MAX_PRICE}
-          value={maxPrice>(priceMax||MAX_PRICE)?(priceMax||MAX_PRICE):maxPrice}
-          onChange={v=>{setMaxPrice(v);resetPage();}}/>
-      </FilterSection>
-
-      <FilterSection title="Customer Rating" icon={<StarFilled size={13}/>}>
-        <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
-          {RATING_OPTIONS.map(opt => (
-            <label key={opt.value} style={{ display:"flex", alignItems:"center", gap:8, cursor:"pointer", padding:"5px 0" }}>
-              <span style={{
-                width:18, height:18, borderRadius:"50%", border:`2px solid ${minRating===opt.value?"#2d9e2d":"#ddd"}`,
-                background: minRating===opt.value?"#2d9e2d":"#fff",
-                display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.15s",
-              }} onClick={()=>{setMinRating(minRating===opt.value?null:opt.value);resetPage();}}>
-                {minRating===opt.value && <span style={{ width:6, height:6, borderRadius:"50%", background:"#fff" }}/>}
-              </span>
-              <StarRating rating={opt.value} size={13}/>
-              <span style={{ fontSize:13, color:"#555" }}>{opt.label}</span>
-            </label>
-          ))}
-        </div>
-      </FilterSection>
-
+      {/* Discount */}
       <FilterSection title="Discount" icon={<TagIcon size={13} stroke="#ff6b35"/>}>
         <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
           {DISCOUNT_OPTIONS.map(opt => (
@@ -467,6 +399,7 @@ const FilterPanel = ({
         </div>
       </FilterSection>
 
+      {/* Availability */}
       <FilterSection title="Availability" icon={<PackageIcon size={13} stroke="#2d9e2d"/>}>
         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
           <CheckRow label="In Stock Only" checked={inStockOnly} onChange={()=>{setInStockOnly(v=>!v);resetPage();}}/>
@@ -547,8 +480,6 @@ export default function ProductsPage() {
   const [selectedCats, setSelectedCats] = useState(
     searchParams.get("categories") ? searchParams.get("categories").split(",") : []
   );
-  const [maxPrice, setMaxPrice]       = useState(MAX_PRICE);
-  const [minRating, setMinRating]     = useState(null);
   const [minDiscount, setMinDiscount] = useState(null);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [onSaleOnly, setOnSaleOnly]   = useState(false);
@@ -601,10 +532,6 @@ export default function ProductsPage() {
       }).catch(() => {}).finally(() => setCatLoading(false));
   }, []);
 
-  const priceMax = allProducts.length
-    ? Math.min(MAX_PRICE, Math.ceil(Math.max(...allProducts.map(p => p.sellingPrice || p.price || 0))))
-    : MAX_PRICE;
-
   const catCounts = categories.reduce((acc, cat) => {
     acc[cat.id] = allProducts.filter(p =>
       String(p.category_id || p.category?.id || "") === String(cat.id)
@@ -612,8 +539,8 @@ export default function ProductsPage() {
     return acc;
   }, {});
 
-  const isDefaultView = !searchQuery && selectedCats.length === 0 && maxPrice >= priceMax
-    && minRating === null && minDiscount === null && !inStockOnly && !onSaleOnly && sortBy === "default";
+  const isDefaultView = !searchQuery && selectedCats.length === 0
+    && minDiscount === null && !inStockOnly && !onSaleOnly && sortBy === "default";
 
   const defaultViewGroups = !loading && isDefaultView
     ? categories.filter(cat => (catCounts[cat.id] || 0) > 0).map(cat => {
@@ -627,7 +554,6 @@ export default function ProductsPage() {
   const filtered = allProducts.filter(p => {
     const price    = Number(p.sellingPrice || 0);
     const oldPrice = Number(p.buyingPrice || 0);
-    const rating   = Number(p.rating || 4);
     const name     = (p.name || p.title || "").toLowerCase();
     const catId    = String(p.category_id || p.category?.id || "");
     const inStock  = (p.stockQuantity ?? 0) > 0;
@@ -635,8 +561,6 @@ export default function ProductsPage() {
 
     if (searchQuery && !name.includes(searchQuery.toLowerCase())) return false;
     if (selectedCats.length && !selectedCats.includes(catId)) return false;
-    if (price > maxPrice) return false;
-    if (minRating && rating < minRating) return false;
     if (minDiscount && discount < minDiscount) return false;
     if (inStockOnly && !inStock) return false;
     if (onSaleOnly && !oldPrice) return false;
@@ -670,16 +594,14 @@ export default function ProductsPage() {
       const cat = categories.find(c => String(c.id) === String(id));
       return cat ? { key:`cat-${id}`, label:cat.name, remove:()=>{setSelectedCats(s=>s.filter(x=>x!==id));resetPage();} } : null;
     }).filter(Boolean),
-    maxPrice < priceMax ? { key:"price", label:`Under ₹${maxPrice}`, remove:()=>{setMaxPrice(priceMax);resetPage();} } : null,
-    minRating  ? { key:"rating",   label:`${minRating}★+`,       remove:()=>{setMinRating(null);resetPage();}   } : null,
-    minDiscount? { key:"discount", label:`${minDiscount}%+ off`, remove:()=>{setMinDiscount(null);resetPage();} } : null,
-    inStockOnly? { key:"stock",    label:"In Stock",             remove:()=>{setInStockOnly(false);resetPage();}} : null,
-    onSaleOnly ? { key:"sale",     label:"On Sale",              remove:()=>{setOnSaleOnly(false);resetPage();}  } : null,
+    minDiscount ? { key:"discount", label:`${minDiscount}%+ off`, remove:()=>{setMinDiscount(null);resetPage();} } : null,
+    inStockOnly ? { key:"stock",    label:"In Stock",             remove:()=>{setInStockOnly(false);resetPage();} } : null,
+    onSaleOnly  ? { key:"sale",     label:"On Sale",              remove:()=>{setOnSaleOnly(false);resetPage();}  } : null,
   ].filter(Boolean);
 
   const clearAllFilters = () => {
-    setSelectedCats([]); setMaxPrice(priceMax); setMinRating(null);
-    setMinDiscount(null); setInStockOnly(false); setOnSaleOnly(false);
+    setSelectedCats([]); setMinDiscount(null);
+    setInStockOnly(false); setOnSaleOnly(false);
     setSortBy("default"); setSearchParams({}); resetPage();
   };
 
@@ -709,8 +631,6 @@ export default function ProductsPage() {
   const filterPanelProps = {
     isMobile, open:isMobile?drawerOpen:sidebarOpen, onClose:()=>setDrawerOpen(false),
     categories, catLoading, catCounts, selectedCats, toggleCat,
-    maxPrice, priceMax, setMaxPrice,
-    minRating, setMinRating,
     minDiscount, setMinDiscount,
     inStockOnly, setInStockOnly,
     onSaleOnly, setOnSaleOnly,

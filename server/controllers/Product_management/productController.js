@@ -34,7 +34,7 @@ exports.addProduct = async (req, res) => {
             name,
             sku,
             category_id: Number(category),
-            brand_id: brand ? Number(brand) : null,
+            brand_id: (brand === undefined || brand === null || brand === "" || brand === "null" || brand === "0") ? null : Number(brand),
             buyingPrice: Number(buyingPrice),
             sellingPrice: Number(sellingPrice),
             stockQuantity: Number(stockQuantity),

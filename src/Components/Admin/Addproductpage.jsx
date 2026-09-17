@@ -583,6 +583,9 @@ export default function AddProductPage({ existingProduct = null, onSaved, onCanc
     const [submitting, setSubmitting] = useState(false);
     const [toast, setToast] = useState(null);
     const [attributes, setAttributes] = useState([]);
+    const [showBrandModal, setShowBrandModal] = useState(false);
+    const [newBrandName, setNewBrandName] = useState("");
+    const [brandSaving, setBrandSaving] = useState(false);
 
     function showToast(msg, type = "success") {
         setToast({ msg, type });
@@ -633,6 +636,28 @@ export default function AddProductPage({ existingProduct = null, onSaved, onCanc
     }, []);
 
     function generateSku() { setSku(String(Math.floor(100000 + Math.random() * 900000))); }
+
+    async function handleCreateBrand() {
+        if (!newBrandName.trim()) return;
+        setBrandSaving(true);
+        try {
+            const data = await apiFetch("/brand/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newBrandName.trim() }),
+            });
+            const newBrand = data.brand;
+            setBrands(prev => [...prev, newBrand]);
+            setBrand(String(newBrand.id));
+            setNewBrandName("");
+            setShowBrandModal(false);
+            showToast("Brand created!");
+        } catch (err) {
+            showToast(err.message, "error");
+        } finally {
+            setBrandSaving(false);
+        }
+    }
 
     function handleAttributeChange(key, value) {
         setAttributes(prev => {
@@ -807,11 +832,52 @@ export default function AddProductPage({ existingProduct = null, onSaved, onCanc
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <Label>Brand</Label>
-                                <Select value={brand} onChange={(e) => setBrand(e.target.value)}>
-                                    <option value="">Select brand</option>
-                                    {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                                </Select>
+                                <div className="flex gap-2">
+                                    <Select value={brand} onChange={(e) => setBrand(e.target.value)} className="flex-1">
+                                        <option value="">No Brand</option>
+                                        {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                    </Select>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowBrandModal(true)}
+                                        className="flex-shrink-0 h-10 px-3 text-xs font-bold text-emerald-600 border border-emerald-300 rounded-xl hover:bg-emerald-50 active:bg-emerald-100 transition-colors"
+                                    >
+                                        + New
+                                    </button>
+                                </div>
                             </div>
+
+                            {/* Brand Modal — Brand JSX ke turant baad, us div ke andar nahi, sirf next line pe */}
+                            {showBrandModal && (
+                                <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+                                    <div className="absolute inset-0 bg-black/40" onClick={() => setShowBrandModal(false)} />
+                                    <div className="relative bg-white w-full max-w-sm rounded-t-3xl sm:rounded-2xl shadow-2xl p-5">
+                                        <h3 className="text-base font-bold text-gray-800 mb-4">Add New Brand</h3>
+                                        <Label required>Brand Name</Label>
+                                        <Input
+                                            value={newBrandName}
+                                            onChange={(e) => setNewBrandName(e.target.value)}
+                                            placeholder="e.g. Amul, Nestlé"
+                                            autoFocus
+                                            onKeyDown={(e) => e.key === "Enter" && handleCreateBrand()}
+                                        />
+                                        <div className="flex gap-3 mt-4">
+                                            <button type="button"
+                                                onClick={() => { setShowBrandModal(false); setNewBrandName(""); }}
+                                                className="flex-1 py-2.5 text-sm font-semibold text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                                                Cancel
+                                            </button>
+                                            <button type="button"
+                                                onClick={handleCreateBrand}
+                                                disabled={brandSaving || !newBrandName.trim()}
+                                                className="flex-[2] flex items-center justify-center gap-2 py-2.5 text-sm font-bold bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white rounded-xl transition-colors">
+                                                {brandSaving && <Spinner />}
+                                                {brandSaving ? "Saving…" : "Create Brand"}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             <div>
                                 <Label required>Unit</Label>
                                 <Input value={unit} onChange={(e) => setUnit(e.target.value)}
