@@ -5,6 +5,7 @@ import { toggleWishlist, fetchWishlist } from "../utils/cartWishlist";
 import FlashSaleBanner from "./Flashsalebanner";
 import { useNavigate } from "react-router-dom";
 const API_BASEA = import.meta.env.VITE_API_URL;
+import { LocationSearchSection } from "../Components/Locationsearch";
 
 // ─── Responsive Hook ──────────────────────────────────────────────────────────
 const useResponsive = () => {
@@ -974,6 +975,8 @@ export default function HomePage() {
 
           <HeroBanner />
           <FeatureCategories categories={categories} loading={catLoading} products={products} />
+          <LocationSearchSection isMobile={isMobile} />
+
           <PromoBanners />
           <StatsBar />
         </div>

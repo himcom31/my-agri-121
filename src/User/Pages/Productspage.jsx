@@ -1,6 +1,7 @@
 // src/Pages/ProductsPage.jsx
 // ✅ OLX-style: Cart hata diya — sirf Wishlist + "Go for Enquiry" (detail page navigate)
 // ✅ Customer Rating + Price Range filters removed
+// ✅ Location filter support added (location_type, location_q, cat_name params)
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -35,6 +36,7 @@ const TagIcon     = (p) => <Icon size={p.size||14} d="M20.59 13.41l-7.17 7.17a2 
 const PackageIcon = (p) => <Icon size={p.size||14} d={["M16.5 9.4l-9-5.19","M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z","M3.27 6.96L12 12.01l8.73-5.05","M12 22.08V12"]} {...p}/>;
 const CloseIcon   = (p) => <Icon size={p.size||20} d="M18 6L6 18M6 6l12 12" {...p}/>;
 const EnquiryIcon = (p) => <Icon size={p.size||14} d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" {...p}/>;
+const LocationPinIcon = (p) => <Icon size={p.size||14} d={["M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z","M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"]} {...p}/>;
 
 // ─── Star Rating ──────────────────────────────────────────────────────────────
 const StarRating = ({ rating = 4, size = 12 }) => (
@@ -335,8 +337,41 @@ const CategoryRowHeader = ({ name, totalCount, onViewAll }) => (
   </div>
 );
 
+// ─── Location Banner ──────────────────────────────────────────────────────────
+// Shows when user comes from LocationSearch
+const LocationBanner = ({ locationTypeParam, locationQParam, catNameParam, onClear }) => {
+  if (!locationTypeParam || !locationQParam) return null;
+  const typeLabel = { district: "District", pincode: "Pincode", address: "Area" }[locationTypeParam] || "";
+  return (
+    <div style={{
+      display:"flex", alignItems:"center", gap:10, flexWrap:"wrap",
+      background:"linear-gradient(135deg,#f0fdf4,#dcfce7)",
+      border:"1.5px solid #bbf7d0", borderRadius:12,
+      padding:"10px 14px", marginBottom:16,
+    }}>
+      <LocationPinIcon size={15} stroke="#16a34a"/>
+      <span style={{ fontSize:13, fontWeight:700, color:"#14532d" }}>
+        {typeLabel}: <span style={{ color:"#16a34a" }}>{locationQParam}</span>
+        {catNameParam && (
+          <> &nbsp;›&nbsp; <span style={{ color:"#16a34a" }}>{catNameParam}</span></>
+        )}
+      </span>
+      <button
+        onClick={onClear}
+        style={{
+          marginLeft:"auto", fontSize:11, fontWeight:700,
+          color:"#16a34a", background:"#fff",
+          border:"1px solid #bbf7d0", borderRadius:8,
+          padding:"4px 10px", cursor:"pointer",
+        }}
+      >
+        ✕ Clear location
+      </button>
+    </div>
+  );
+};
+
 // ─── Filter Panel ─────────────────────────────────────────────────────────────
-// Rating + Price filters removed — sirf Categories, Discount, Availability
 const FilterPanel = ({
   isMobile, open, onClose,
   categories, catLoading, catCounts, selectedCats, toggleCat,
@@ -491,6 +526,21 @@ export default function ProductsPage() {
   const [drawerOpen, setDrawerOpen]   = useState(false);
   const [sortDropOpen, setSortDropOpen] = useState(false);
 
+  // ── NEW: Location params from LocationSearch ──────────────────────────────
+  const locationTypeParam = searchParams.get("location_type") || "";
+  const locationQParam    = searchParams.get("location_q") || "";
+  const catNameParam      = searchParams.get("cat_name") || "";
+
+  const clearLocationFilter = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("location_type");
+    newParams.delete("location_q");
+    newParams.delete("cat_name");
+    setSearchParams(newParams);
+    resetPage();
+  };
+  // ─────────────────────────────────────────────────────────────────────────
+
   const PER_PAGE = view === "grid" ? 20 : 15;
   const searchQuery = searchParams.get("search") || "";
 
@@ -539,8 +589,10 @@ export default function ProductsPage() {
     return acc;
   }, {});
 
+  // ── UPDATED: isDefaultView mein location params bhi check karo ──
   const isDefaultView = !searchQuery && selectedCats.length === 0
-    && minDiscount === null && !inStockOnly && !onSaleOnly && sortBy === "default";
+    && minDiscount === null && !inStockOnly && !onSaleOnly && sortBy === "default"
+    && !locationTypeParam && !catNameParam;
 
   const defaultViewGroups = !loading && isDefaultView
     ? categories.filter(cat => (catCounts[cat.id] || 0) > 0).map(cat => {
@@ -551,6 +603,7 @@ export default function ProductsPage() {
       })
     : [];
 
+  // ── UPDATED: filtered mein location + cat_name logic add kiya ──
   const filtered = allProducts.filter(p => {
     const price    = Number(p.sellingPrice || 0);
     const oldPrice = Number(p.buyingPrice || 0);
@@ -564,6 +617,24 @@ export default function ProductsPage() {
     if (minDiscount && discount < minDiscount) return false;
     if (inStockOnly && !inStock) return false;
     if (onSaleOnly && !oldPrice) return false;
+
+    // ── Location filter ──
+    if (locationTypeParam && locationQParam) {
+      const q = locationQParam.toLowerCase().trim();
+      if (locationTypeParam === "district" && !p.district?.toLowerCase().includes(q)) return false;
+      if (locationTypeParam === "pincode"  && p.pincode?.toString() !== q) return false;
+      if (locationTypeParam === "address"  && !(
+        p.address?.toLowerCase().includes(q) ||
+        p.village?.toLowerCase().includes(q)
+      )) return false;
+    }
+
+    // ── Category name filter (LocationSearch se aaya) ──
+    if (catNameParam) {
+      const pCatName = p.category_name || p.category?.name || "";
+      if (pCatName.toLowerCase() !== catNameParam.toLowerCase()) return false;
+    }
+
     return true;
   });
 
@@ -642,6 +713,13 @@ export default function ProductsPage() {
     : sidebarOpen
       ? "repeat(auto-fill, minmax(200px,1fr))"
       : "repeat(auto-fill, minmax(220px,1fr))";
+
+  // ── Page title logic ──
+  const pageTitle = searchQuery
+    ? `Results for "${searchQuery}"`
+    : catNameParam
+      ? catNameParam
+      : "All Products";
 
   return (
     <>
@@ -745,13 +823,23 @@ export default function ProductsPage() {
             <div style={{ marginBottom:20, display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
               <div>
                 <h1 style={{ fontSize:26, fontWeight:900, color:"#1a1a1a", margin:0, letterSpacing:-0.5 }}>
-                  {searchQuery ? `Results for "${searchQuery}"` : "All Products"}
+                  {pageTitle}
                 </h1>
-                <p style={{ fontSize:13, color:"#888", margin:"4px 0 0" }}>
+                <p style={{ fontSize:13, color:"#888", margin:"4px 0 0", display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
                   {loading ? "Loading products…"
                     : isDefaultView
                       ? `${allProducts.length.toLocaleString()} products across ${defaultViewGroups.length} categories`
                       : `${sorted.length.toLocaleString()} products found`}
+                  {locationQParam && !loading && (
+                    <span style={{
+                      display:"inline-flex", alignItems:"center", gap:4,
+                      background:"#f0fdf4", border:"1px solid #bbf7d0",
+                      borderRadius:20, padding:"2px 8px",
+                      fontSize:11, fontWeight:700, color:"#15803d",
+                    }}>
+                      📍 {locationQParam}
+                    </span>
+                  )}
                 </p>
               </div>
               <form onSubmit={handleSearchSubmit} style={{ display:"flex", alignItems:"center" }}>
@@ -765,6 +853,15 @@ export default function ProductsPage() {
                 </button>
               </form>
             </div>
+
+            {/* ── Location Banner ── */}
+            <LocationBanner
+              locationTypeParam={locationTypeParam}
+              locationQParam={locationQParam}
+              catNameParam={catNameParam}
+              onClear={clearLocationFilter}
+            />
+
             {(activeFilters.length > 0 || searchQuery) && (
               <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:16, alignItems:"center" }}>
                 <span style={{ fontSize:12, color:"#888", fontWeight:600 }}>Active filters:</span>
@@ -827,11 +924,28 @@ export default function ProductsPage() {
             {isMobile && (
               <div style={{ marginBottom:12 }}>
                 <h1 style={{ fontSize:20, fontWeight:900, color:"#1a1a1a", margin:"0 0 2px", letterSpacing:-0.3 }}>
-                  {searchQuery ? `"${searchQuery}"` : "All Products"}
+                  {pageTitle}
                 </h1>
                 <p style={{ fontSize:12, color:"#888", margin:0 }}>
                   {loading?"Loading…":isDefaultView?`${allProducts.length.toLocaleString()} products`:`${sorted.length.toLocaleString()} found`}
                 </p>
+                {/* Mobile location banner */}
+                {locationQParam && (
+                  <div style={{
+                    display:"flex", alignItems:"center", gap:6,
+                    background:"#f0fdf4", border:"1px solid #bbf7d0",
+                    borderRadius:8, padding:"6px 10px", marginTop:8,
+                  }}>
+                    <LocationPinIcon size={12} stroke="#16a34a"/>
+                    <span style={{ fontSize:11, fontWeight:700, color:"#15803d", flex:1 }}>
+                      {locationQParam}{catNameParam && ` › ${catNameParam}`}
+                    </span>
+                    <button onClick={clearLocationFilter} style={{
+                      background:"none", border:"none", cursor:"pointer",
+                      fontSize:14, color:"#16a34a", padding:0, lineHeight:1,
+                    }}>✕</button>
+                  </div>
+                )}
               </div>
             )}
 

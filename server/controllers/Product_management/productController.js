@@ -45,7 +45,11 @@ exports.addProduct = async (req, res) => {
                 try { return attributes ? JSON.parse(attributes) : []; }
                 catch { return []; }
             })(),
-            variants,                       // ← NEW
+            variants,
+            district: req.body.district?.trim() || null,   // ← add
+            pincode: req.body.pincode?.trim() || null,   // ← add
+            village: req.body.village?.trim() || null,   // ← add
+            address: req.body.address?.trim() || null,   // ← add
             createdBy: req.user.id,
         });
 
@@ -146,6 +150,12 @@ exports.updateProduct = async (req, res) => {
         if (rawVariants !== undefined) {
             updateData.variants = parseVariants(rawVariants);
         }
+
+        // ── Location fields ───────────────────────────────────────────────
+        if (req.body.district !== undefined) updateData.district = req.body.district?.trim() || null;
+        if (req.body.pincode !== undefined) updateData.pincode = req.body.pincode?.trim() || null;
+        if (req.body.village !== undefined) updateData.village = req.body.village?.trim() || null;
+        if (req.body.address !== undefined) updateData.address = req.body.address?.trim() || null;
 
         const product = await Product.findByIdAndUpdate(req.params.id, updateData);
 

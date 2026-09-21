@@ -7,6 +7,8 @@ const {
   addProduct, getAllProducts, getProductById,
   updateProduct, deleteProduct, bulkImportProducts,
 } = require('../controllers/Product_management/productController');
+const { getLocationSuggestions } = require('../controllers/searchSuggestionsController');
+
 
 const { compressAndUpload, compressAndUploadFields } = require('../config/cloudinary');
 const { protect } = require('../middleware/authMiddleware');
@@ -24,6 +26,8 @@ router.post(
 );
 
 router.get('/allFree', getAllProducts);
+router.get('/location-suggestions', getLocationSuggestions);
+
 router.get('/all', protect, getAllProducts);
 router.get('/:id', protect, getProductById);
 

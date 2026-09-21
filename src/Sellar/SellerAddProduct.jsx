@@ -156,6 +156,9 @@ export default function SellerAddProduct() {
     if (!form.stockQuantity) return showToast("Stock quantity is required", "error");
     if (!form.unit)          return showToast("Unit is required", "error");
     if (!thumbFile)          return showToast("Product thumbnail is required", "error");
+    if (!form.district) return showToast("District is required", "error");
+if (!form.pincode)  return showToast("Pincode is required", "error");
+if (!form.address)  return showToast("Main address is required", "error");
 
     setSubmitting(true);
     try {
@@ -185,6 +188,8 @@ export default function SellerAddProduct() {
   const handleReset = () => {
     setForm({
       name: "", shortDescription: "", description: "",
+        district: "", pincode: "", village: "", address: "",  // ← add karo
+
       category: "", unit: "", sku: "",
       buyingPrice: "", sellingPrice: "", stockQuantity: "",
       minOrderQuantity: "1",
@@ -412,6 +417,51 @@ export default function SellerAddProduct() {
           <textarea
             name="description" value={form.description} onChange={handleChange}
             placeholder="Detailed product information"
+            rows={3}
+            style={{ ...inputStyle, resize: "vertical" }}
+          />
+        </Field>
+      </div>
+
+      {/* ── Section: Location ── */}
+      <div style={{
+        background: "#fff", border: "1px solid #e8f5e1",
+        borderRadius: 16, padding: "16px", marginBottom: 14,
+      }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#2d5a1b", marginBottom: 14 }}>
+          📍 Product Location
+        </div>
+
+        <Grid2>
+          <Field label="District" required>
+            <input
+              name="district" value={form.district} onChange={handleChange}
+              placeholder="e.g. Patna, Varanasi"
+              style={inputStyle}
+            />
+          </Field>
+          <Field label="Pincode" required>
+            <input
+              name="pincode" value={form.pincode} onChange={handleChange}
+              placeholder="e.g. 800001"
+              maxLength={6}
+              style={inputStyle}
+            />
+          </Field>
+        </Grid2>
+
+        <Field label="Village (optional)">
+          <input
+            name="village" value={form.village} onChange={handleChange}
+            placeholder="e.g. Rampur"
+            style={inputStyle}
+          />
+        </Field>
+
+        <Field label="Main Address" required>
+          <textarea
+            name="address" value={form.address} onChange={handleChange}
+            placeholder="e.g. Ward No. 5, Near Post Office, Main Road"
             rows={3}
             style={{ ...inputStyle, resize: "vertical" }}
           />

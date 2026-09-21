@@ -1,7 +1,7 @@
 // controllers/sellerProductController.js
 
-const { pool }     = require("../config/db");
-const cloudinary   = require("cloudinary").v2;
+const { pool } = require("../config/db");
+const cloudinary = require("cloudinary").v2;
 require("dotenv").config();
 
 // ── Upload helper ──────────────────────────────────────────────
@@ -23,6 +23,7 @@ const addSellerProduct = async (req, res) => {
   try {
     const {
       name, shortDescription, description,
+      district, pincode, village, address,
       category,
       buyingPrice, sellingPrice,
       stockQuantity, minOrderQuantity,
@@ -31,11 +32,15 @@ const addSellerProduct = async (req, res) => {
 
     // Required field check
     const missing = [];
-    if (!name)             missing.push("name");
-    if (!category)         missing.push("category");
-    if (!sellingPrice)     missing.push("sellingPrice");
-    if (!stockQuantity)    missing.push("stockQuantity");
-    if (!unit)             missing.push("unit");
+    if (!name) missing.push("name");
+    if (!category) missing.push("category");
+    if (!sellingPrice) missing.push("sellingPrice");
+    if (!stockQuantity) missing.push("stockQuantity");
+    if (!unit) missing.push("unit");
+    if (!district) missing.push("district");
+    if (!pincode) missing.push("pincode");
+    if (!address) missing.push("address");
+    // village optional hai — check nahi
     if (missing.length) {
       return res.status(400).json({ message: `Missing fields: ${missing.join(", ")}` });
     }
@@ -72,32 +77,38 @@ const addSellerProduct = async (req, res) => {
       "-" + Date.now();
 
     // Insert product
-    const [result] = await pool.execute(
-      `INSERT INTO products (
-        name, slug, shortDescription, description,
-        category_id, buyingPrice, sellingPrice, discountPrice,
-        stockQuantity, minOrderQuantity, unit, sku,
-        thumbnail, seller_id, status, createdBy
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [
-        name.trim(),
-        slug,
-        shortDescription?.trim() || name.trim(),
-        description?.trim()      || name.trim(),
-        Number(category),
-        Number(buyingPrice)      || 0,
-        Number(sellingPrice),
-        0,
-        Number(stockQuantity),
-        Number(minOrderQuantity) || 1,
-        unit.trim(),
-        finalSku,
-        thumbnailUrl,
-        req.sellerId,
-        "pending",
-        null,
-      ]
-    );
+   const [result] = await pool.execute(
+  `INSERT INTO products (
+    name, slug, shortDescription, description,
+    category_id,
+    district, pincode, village, address,
+    buyingPrice, sellingPrice, discountPrice,
+    stockQuantity, minOrderQuantity, unit, sku,
+    thumbnail, seller_id, status, createdBy
+  ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+  [
+    name.trim(),
+    slug,
+    shortDescription?.trim() || name.trim(),
+    description?.trim()      || name.trim(),
+    Number(category),
+    district.trim(),
+    pincode.trim(),
+    village?.trim() || null,
+    address.trim(),
+    Number(buyingPrice) || 0,
+    Number(sellingPrice),
+    0,
+    Number(stockQuantity),
+    Number(minOrderQuantity) || 1,
+    unit.trim(),
+    finalSku,
+    thumbnailUrl,
+    req.sellerId,
+    "pending",
+    null,
+  ]
+);
 
     const productId = result.insertId;
 
@@ -129,6 +140,7 @@ const getMyProducts = async (req, res) => {
     const [rows] = await pool.execute(
       `SELECT p.id, p.name, p.thumbnail, p.sellingPrice, p.stockQuantity,
               p.status, p.createdAt,
+              p.district, p.pincode, p.village, p.address, 
               c.name AS category_name
        FROM products p
        LEFT JOIN categories c ON p.category_id = c.id
@@ -183,6 +195,7 @@ const adminGetSellerProducts = async (req, res) => {
     const { status } = req.query; // pending | approved | rejected | (all)
     let query = `
       SELECT p.id, p.name, p.thumbnail, p.sellingPrice, p.buyingPrice,
+      p.district, p.pincode, p.village, p.address,
              p.stockQuantity, p.status, p.createdAt,
              c.name  AS category_name,
              s.full_name AS seller_name,

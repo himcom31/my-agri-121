@@ -22,6 +22,8 @@ import UserNavbar from './User/Components/Usernavbar';
 import UserFooter from './User/Components/Userfooter';
 import ResetPassword from './User/Pages/ResetPassword';  // ← add this import
 import ForgotPassword from './User/Pages/ForgotPassword';
+import LocationProductsPage from "./User/Components/Locationsearch";
+
 
 
 // driver
@@ -378,6 +380,7 @@ function App() {
         <Route path="/user/deleteaccount" element={<DeleteAccount />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/user/location-products" element={<LocationProductsPage />} />
 
 
 
