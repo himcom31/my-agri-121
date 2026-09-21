@@ -1,16 +1,11 @@
 // src/Pages/ProductsPage.jsx
-// ✅ OLX-style: Cart hata diya — sirf Wishlist + "Go for Enquiry" (detail page navigate)
-// ✅ Customer Rating + Price Range filters removed
-// ✅ Location filter support added (location_type, location_q, cat_name params)
-
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { openLoginModal } from "../utils/authEvents";
 import { toggleWishlist, fetchWishlist } from "../utils/cartWishlist";
 
 const API_BASEA = import.meta.env.VITE_API_URL;
 
-// ─── Google Font ──────────────────────────────────────────────────────────────
 const FontLink = () => (
   <style>{`@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');`}</style>
 );
@@ -22,21 +17,22 @@ const Icon = ({ d, size = 16, stroke = "currentColor", fill = "none", strokeWidt
   </svg>
 );
 
-const SearchIcon  = (p) => <Icon size={p.size||16} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" {...p}/>;
-const FilterIcon  = (p) => <Icon size={p.size||16} d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" {...p}/>;
-const GridIcon    = (p) => <Icon size={p.size||16} d={["M3 3h7v7H3z","M14 3h7v7h-7z","M14 14h7v7h-7z","M3 14h7v7H3z"]} {...p}/>;
-const ListIcon    = (p) => <Icon size={p.size||16} d={["M8 6h13","M8 12h13","M8 18h13","M3 6h.01","M3 12h.01","M3 18h.01"]} {...p}/>;
-const HeartIcon   = ({ filled, ...p }) => <Icon size={p.size||16} fill={filled?"#e74c3c":"none"} stroke={filled?"#e74c3c":"currentColor"} d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" {...p}/>;
-const ChevronDown = (p) => <Icon size={p.size||14} d="M6 9l6 6 6-6" {...p}/>;
-const ChevronUp   = (p) => <Icon size={p.size||14} d="M18 15l-6-6-6 6" {...p}/>;
-const XIcon       = (p) => <Icon size={p.size||14} d="M18 6L6 18M6 6l12 12" {...p}/>;
-const StarFilled  = (p) => <Icon size={p.size||12} fill="#f39c12" stroke="#f39c12" strokeWidth={1} d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" {...p}/>;
-const SortIcon    = (p) => <Icon size={p.size||16} d={["M3 6h18","M7 12h10","M10 18h4"]} {...p}/>;
-const TagIcon     = (p) => <Icon size={p.size||14} d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" {...p}/>;
-const PackageIcon = (p) => <Icon size={p.size||14} d={["M16.5 9.4l-9-5.19","M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z","M3.27 6.96L12 12.01l8.73-5.05","M12 22.08V12"]} {...p}/>;
-const CloseIcon   = (p) => <Icon size={p.size||20} d="M18 6L6 18M6 6l12 12" {...p}/>;
-const EnquiryIcon = (p) => <Icon size={p.size||14} d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" {...p}/>;
+const SearchIcon      = (p) => <Icon size={p.size||16} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" {...p}/>;
+const FilterIcon      = (p) => <Icon size={p.size||16} d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" {...p}/>;
+const GridIcon        = (p) => <Icon size={p.size||16} d={["M3 3h7v7H3z","M14 3h7v7h-7z","M14 14h7v7h-7z","M3 14h7v7H3z"]} {...p}/>;
+const ListIcon        = (p) => <Icon size={p.size||16} d={["M8 6h13","M8 12h13","M8 18h13","M3 6h.01","M3 12h.01","M3 18h.01"]} {...p}/>;
+const HeartIcon       = ({ filled, ...p }) => <Icon size={p.size||16} fill={filled?"#e74c3c":"none"} stroke={filled?"#e74c3c":"currentColor"} d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" {...p}/>;
+const ChevronDown     = (p) => <Icon size={p.size||14} d="M6 9l6 6 6-6" {...p}/>;
+const ChevronUp       = (p) => <Icon size={p.size||14} d="M18 15l-6-6-6 6" {...p}/>;
+const XIcon           = (p) => <Icon size={p.size||14} d="M18 6L6 18M6 6l12 12" {...p}/>;
+const SortIcon        = (p) => <Icon size={p.size||16} d={["M3 6h18","M7 12h10","M10 18h4"]} {...p}/>;
+const TagIcon         = (p) => <Icon size={p.size||14} d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" {...p}/>;
+const PackageIcon     = (p) => <Icon size={p.size||14} d={["M16.5 9.4l-9-5.19","M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z","M3.27 6.96L12 12.01l8.73-5.05","M12 22.08V12"]} {...p}/>;
+const CloseIcon       = (p) => <Icon size={p.size||20} d="M18 6L6 18M6 6l12 12" {...p}/>;
+const EnquiryIcon     = (p) => <Icon size={p.size||14} d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" {...p}/>;
 const LocationPinIcon = (p) => <Icon size={p.size||14} d={["M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z","M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"]} {...p}/>;
+// NEW: District icon
+const DistrictIcon    = (p) => <Icon size={p.size||14} d={["M3 21h18","M5 21V7l8-4v18","M19 21V11l-6-4","M9 9h1v1H9z","M9 12h1v1H9z","M9 15h1v1H9z","M9 18h1v1H9z"]} {...p}/>;
 
 // ─── Star Rating ──────────────────────────────────────────────────────────────
 const StarRating = ({ rating = 4, size = 12 }) => (
@@ -77,27 +73,97 @@ const CheckRow = ({ label, count, checked, onChange }) => (
     }} onClick={onChange}>
       {checked && <svg width="10" height="10" viewBox="0 0 9 9"><polyline points="1.5 4.5 3.5 6.5 7.5 2.5" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
     </span>
-    <span style={{ fontSize:14, color:"#444", flex:1 }}>{label}</span>
+    <span style={{ fontSize:13, color:"#444", flex:1 }}>{label}</span>
     {count!=null && <span style={{ fontSize:11, color:"#bbb", background:"#f5f5f5", borderRadius:10, padding:"1px 7px" }}>{count}</span>}
   </label>
 );
+
+// ─── NEW: District Filter Section ─────────────────────────────────────────────
+const DistrictFilterSection = ({ districts, districtCounts, selectedDistricts, toggleDistrict, isMobile }) => {
+  const [searchDist, setSearchDist] = useState("");
+  const [showAll, setShowAll] = useState(false);
+
+  const filtered = districts.filter(d =>
+    d.toLowerCase().includes(searchDist.toLowerCase())
+  );
+  const visible = showAll ? filtered : filtered.slice(0, 6);
+
+  if (districts.length === 0) return (
+    <p style={{ fontSize:12, color:"#bbb", margin:0 }}>No districts found.</p>
+  );
+
+  return (
+    <div>
+      {/* Search input */}
+      <div style={{
+        display:"flex", alignItems:"center", gap:6,
+        border:"1.5px solid #e5e7eb", borderRadius:8,
+        padding:"6px 10px", marginBottom:10, background:"#fafafa",
+      }}>
+        <SearchIcon size={13} stroke="#9ca3af"/>
+        <input
+          value={searchDist}
+          onChange={e => setSearchDist(e.target.value)}
+          placeholder="Search district…"
+          style={{
+            border:"none", background:"transparent", outline:"none",
+            fontSize:12, color:"#1a1a1a", fontFamily:"inherit", flex:1,
+          }}
+        />
+        {searchDist && (
+          <button onClick={() => setSearchDist("")} style={{ background:"none", border:"none", cursor:"pointer", padding:0, color:"#9ca3af", fontSize:16, lineHeight:1 }}>×</button>
+        )}
+      </div>
+
+      {/* District list */}
+      <div style={{ display:"flex", flexDirection:"column", gap:2, maxHeight:220, overflowY:"auto", paddingRight:4 }}>
+        {visible.length === 0 ? (
+          <p style={{ fontSize:12, color:"#bbb", margin:0 }}>No match found.</p>
+        ) : visible.map(dist => (
+          <CheckRow
+            key={dist}
+            label={dist}
+            count={districtCounts[dist] || 0}
+            checked={selectedDistricts.includes(dist)}
+            onChange={() => toggleDistrict(dist)}
+          />
+        ))}
+      </div>
+
+      {/* Show more / less */}
+      {filtered.length > 6 && (
+        <button
+          onClick={() => setShowAll(v => !v)}
+          style={{
+            marginTop:8, fontSize:11, fontWeight:700,
+            color:"#2d9e2d", background:"#f0faf0",
+            border:"1px solid #c8e6c9", borderRadius:8,
+            padding:"4px 10px", cursor:"pointer", fontFamily:"inherit",
+          }}
+        >
+          {showAll ? "Show less ↑" : `+${filtered.length - 6} more districts`}
+        </button>
+      )}
+    </div>
+  );
+};
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 const ProductCard = ({ product, view = "grid", isMobile = false, onUnwish }) => {
   const [wished, setWished] = useState(false);
   const navigate = useNavigate();
 
-  const oldPrice = Number(product.buyingPrice || product.price || 0);
-  const price    = Number(product.sellingPrice || product.oldPrice || 0);
-  const name     = product.name || product.title || "Product";
-  const unit     = product.unit || product.weight || "";
-  const image    = product.thumbnail || product.image || product.images?.[0];
-  const catName  = typeof product.category === "object" ? product.category?.name : product.category || "";
-  const rating   = product.rating || 4;
-  const reviews  = product.reviews || Math.floor(Math.random() * 120 + 5);
-  const discount = oldPrice && oldPrice > price ? Math.round((1 - price / oldPrice) * 100) : null;
-  const stock    = product.stockQuantity ?? 0;
-  const inStock  = stock > 0;
+  const oldPrice   = Number(product.buyingPrice || product.price || 0);
+  const price      = Number(product.sellingPrice || product.oldPrice || 0);
+  const name       = product.name || product.title || "Product";
+  const unit       = product.unit || product.weight || "";
+  const image      = product.thumbnail || product.image || product.images?.[0];
+  const catName    = typeof product.category === "object" ? product.category?.name : product.category || "";
+  const rating     = product.rating || 4;
+  const reviews    = product.reviews || Math.floor(Math.random() * 120 + 5);
+  const discount   = oldPrice && oldPrice > price ? Math.round((1 - price / oldPrice) * 100) : null;
+  const stock      = product.stockQuantity ?? 0;
+  const inStock    = stock > 0;
   const isLowStock = stock > 0 && stock <= 10;
 
   const isLoggedIn = () => !!localStorage.getItem("userToken");
@@ -132,25 +198,16 @@ const ProductCard = ({ product, view = "grid", isMobile = false, onUnwish }) => 
     if (slug) navigate(`/products/${slug}`);
   };
 
-  // ── List view ──────────────────────────────────────────────────────────────
+  // ── List view ──
   if (view === "list") {
     return (
-      <div
-        onClick={goToProduct}
-        style={{
-          display:"flex", gap:isMobile?10:16, background:"#fff", borderRadius:12,
-          border:"1px solid #f0f0f0", boxShadow:"0 1px 6px rgba(0,0,0,0.05)",
-          padding: isMobile ? "10px" : "14px",
-          transition:"box-shadow 0.2s,transform 0.2s", cursor:"pointer", animation:"fadeIn 0.3s ease",
-        }}
+      <div onClick={goToProduct}
+        style={{ display:"flex", gap:isMobile?10:16, background:"#fff", borderRadius:12, border:"1px solid #f0f0f0", boxShadow:"0 1px 6px rgba(0,0,0,0.05)", padding:isMobile?"10px":"14px", transition:"box-shadow 0.2s,transform 0.2s", cursor:"pointer", animation:"fadeIn 0.3s ease" }}
         onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 6px 22px rgba(0,0,0,0.11)";e.currentTarget.style.transform="translateY(-2px)";}}
         onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 1px 6px rgba(0,0,0,0.05)";e.currentTarget.style.transform="translateY(0)";}}
       >
         <div style={{ position:"relative", width:isMobile?90:120, height:isMobile?90:120, flexShrink:0, borderRadius:8, overflow:"hidden", background:"#f8f8f8" }}>
-          {image
-            ? <img src={image} alt={name} style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
-            : <span style={{ fontSize:30, display:"flex", alignItems:"center", justifyContent:"center", height:"100%" }}>🛒</span>
-          }
+          {image ? <img src={image} alt={name} style={{ width:"100%", height:"100%", objectFit:"cover" }}/> : <span style={{ fontSize:30, display:"flex", alignItems:"center", justifyContent:"center", height:"100%" }}>🛒</span>}
           {discount && <span style={{ position:"absolute", top:4, left:4, background:"#ff6b35", color:"#fff", fontSize:8, fontWeight:800, padding:"2px 5px", borderRadius:3 }}>{discount}%</span>}
         </div>
         <div style={{ flex:1, display:"flex", flexDirection:"column", gap:3, minWidth:0 }}>
@@ -160,30 +217,22 @@ const ProductCard = ({ product, view = "grid", isMobile = false, onUnwish }) => 
             <StarRating rating={rating} size={isMobile?10:12}/>
             <span style={{ fontSize:10, color:"#999" }}>({reviews})</span>
           </div>
+          {product.district && (
+            <span style={{ fontSize:10, color:"#16a34a", fontWeight:600, display:"flex", alignItems:"center", gap:3 }}>
+              📍 {product.district}
+            </span>
+          )}
           <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:"auto", paddingTop:4 }}>
             <span style={{ fontSize:isMobile?15:18, fontWeight:800, color:"#2d9e2d" }}>₹{price.toFixed(2)}</span>
-            {oldPrice > 0 && oldPrice !== price && (
-              <span style={{ fontSize:10, color:"#ccc", textDecoration:"line-through" }}>₹{oldPrice.toFixed(2)}</span>
-            )}
+            {oldPrice > 0 && oldPrice !== price && <span style={{ fontSize:10, color:"#ccc", textDecoration:"line-through" }}>₹{oldPrice.toFixed(2)}</span>}
           </div>
         </div>
         <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", justifyContent:"space-between", flexShrink:0, gap:6 }}>
           <button onClick={handleWishlist} style={{ background:"none", border:"none", cursor:"pointer", padding:4 }}>
             <HeartIcon filled={wished} size={isMobile?16:18} stroke={wished?"#e74c3c":"#ccc"}/>
           </button>
-          <button
-            onClick={handleEnquiry}
-            disabled={!inStock}
-            style={{
-              padding: isMobile?"7px 10px":"8px 14px",
-              background: inStock ? "#2d9e2d" : "#e0e0e0",
-              color: inStock ? "#fff" : "#aaa",
-              border:"none", borderRadius:8,
-              fontSize:isMobile?11:12, fontWeight:700,
-              cursor: inStock ? "pointer" : "not-allowed",
-              display:"flex", alignItems:"center", gap:4, whiteSpace:"nowrap",
-            }}
-          >
+          <button onClick={handleEnquiry} disabled={!inStock}
+            style={{ padding:isMobile?"7px 10px":"8px 14px", background:inStock?"#2d9e2d":"#e0e0e0", color:inStock?"#fff":"#aaa", border:"none", borderRadius:8, fontSize:isMobile?11:12, fontWeight:700, cursor:inStock?"pointer":"not-allowed", display:"flex", alignItems:"center", gap:4, whiteSpace:"nowrap" }}>
             <EnquiryIcon size={12} stroke={inStock?"#fff":"#aaa"}/>
             {isMobile ? "Enquire" : (inStock ? "Go for Enquiry" : "Out of Stock")}
           </button>
@@ -192,45 +241,27 @@ const ProductCard = ({ product, view = "grid", isMobile = false, onUnwish }) => 
     );
   }
 
-  // ── Grid view ──────────────────────────────────────────────────────────────
+  // ── Grid view ──
   return (
-    <div
-      onClick={goToProduct}
-      style={{
-        background:"#fff", borderRadius:12, border:"1px solid #f0f0f0",
-        boxShadow:"0 1px 6px rgba(0,0,0,0.05)", cursor:"pointer",
-        transition:"box-shadow 0.2s,transform 0.2s", display:"flex", flexDirection:"column",
-        overflow:"hidden", animation:"fadeIn 0.3s ease",
-      }}
+    <div onClick={goToProduct}
+      style={{ background:"#fff", borderRadius:12, border:"1px solid #f0f0f0", boxShadow:"0 1px 6px rgba(0,0,0,0.05)", cursor:"pointer", transition:"box-shadow 0.2s,transform 0.2s", display:"flex", flexDirection:"column", overflow:"hidden", animation:"fadeIn 0.3s ease" }}
       onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 6px 22px rgba(0,0,0,0.11)";e.currentTarget.style.transform="translateY(-3px)";}}
       onMouseLeave={e=>{e.currentTarget.style.boxShadow="0 1px 6px rgba(0,0,0,0.05)";e.currentTarget.style.transform="translateY(0)";}}
     >
       <div style={{ position:"relative" }}>
         <div style={{ width:"100%", height:isMobile?150:190, background:"#f8f8f8", display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>
           {image
-            ? <img src={image} alt={name} style={{ width:"100%", height:"100%", objectFit:"cover", transition:"transform 0.4s" }}
-                onMouseEnter={e=>e.target.style.transform="scale(1.06)"}
-                onMouseLeave={e=>e.target.style.transform="scale(1)"}
-              />
+            ? <img src={image} alt={name} style={{ width:"100%", height:"100%", objectFit:"cover", transition:"transform 0.4s" }} onMouseEnter={e=>e.target.style.transform="scale(1.06)"} onMouseLeave={e=>e.target.style.transform="scale(1)"}/>
             : <span style={{ fontSize:isMobile?32:44 }}>🛒</span>
           }
         </div>
-        {discount && (
-          <span style={{ position:"absolute", top:6, left:6, background:"#ff6b35", color:"#fff", fontSize:9, fontWeight:800, padding:"2px 7px", borderRadius:4 }}>
-            {discount}% OFF
-          </span>
-        )}
+        {discount && <span style={{ position:"absolute", top:6, left:6, background:"#ff6b35", color:"#fff", fontSize:9, fontWeight:800, padding:"2px 7px", borderRadius:4 }}>{discount}% OFF</span>}
         {!inStock && (
           <div style={{ position:"absolute", inset:0, background:"rgba(255,255,255,0.7)", display:"flex", alignItems:"center", justifyContent:"center" }}>
             <span style={{ fontSize:11, fontWeight:700, color:"#e74c3c", background:"#fff", padding:"3px 10px", borderRadius:20, border:"1px solid #fdd" }}>Out of Stock</span>
           </div>
         )}
-        <button onClick={handleWishlist} style={{
-          position:"absolute", top:6, right:6, background:"#fff", border:"none",
-          borderRadius:"50%", width:28, height:28, cursor:"pointer",
-          display:"flex", alignItems:"center", justifyContent:"center",
-          boxShadow:"0 1px 6px rgba(0,0,0,0.15)", transition:"transform 0.2s",
-        }}>
+        <button onClick={handleWishlist} style={{ position:"absolute", top:6, right:6, background:"#fff", border:"none", borderRadius:"50%", width:28, height:28, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 1px 6px rgba(0,0,0,0.15)", transition:"transform 0.2s" }}>
           <HeartIcon filled={wished} size={14} stroke={wished?"#e74c3c":"#bbb"}/>
         </button>
       </div>
@@ -242,28 +273,21 @@ const ProductCard = ({ product, view = "grid", isMobile = false, onUnwish }) => 
           <StarRating rating={rating} size={isMobile?10:12}/>
           <span style={{ fontSize:9, color:"#bbb" }}>({reviews})</span>
         </div>
+        {product.district && (
+          <span style={{ fontSize:9, color:"#16a34a", fontWeight:700, display:"flex", alignItems:"center", gap:3 }}>
+            📍 {product.district}
+          </span>
+        )}
         {!isMobile && unit && <div style={{ fontSize:11, color:"#bbb" }}>{unit}</div>}
-        <div style={{ fontSize:9, fontWeight:700, color: !inStock?"#e74c3c": isLowStock?"#e67e22":"#27ae60" }}>
+        <div style={{ fontSize:9, fontWeight:700, color:!inStock?"#e74c3c":isLowStock?"#e67e22":"#27ae60" }}>
           {!inStock ? "❌ Out of Stock" : isLowStock ? `⚠️ Only ${stock} left` : "✅ In Stock"}
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:5, marginTop:"auto", paddingTop:4 }}>
           <span style={{ fontSize:isMobile?14:16, fontWeight:800, color:"#2d9e2d" }}>₹{price.toFixed(2)}</span>
-          {oldPrice > 0 && oldPrice !== price && (
-            <span style={{ fontSize:10, color:"#ccc", textDecoration:"line-through" }}>₹{oldPrice.toFixed(2)}</span>
-          )}
+          {oldPrice > 0 && oldPrice !== price && <span style={{ fontSize:10, color:"#ccc", textDecoration:"line-through" }}>₹{oldPrice.toFixed(2)}</span>}
         </div>
-        <button
-          onClick={handleEnquiry}
-          disabled={!inStock}
-          style={{
-            width:"100%", padding:isMobile?"8px 0":"9px 0",
-            background: inStock ? "#2d9e2d" : "#e8e8e8",
-            color: inStock ? "#fff" : "#aaa",
-            border:"none", borderRadius:8, fontSize:12, fontWeight:700,
-            cursor: inStock ? "pointer" : "not-allowed",
-            display:"flex", alignItems:"center", justifyContent:"center", gap:5,
-            transition:"background 0.2s", marginTop:4,
-          }}
+        <button onClick={handleEnquiry} disabled={!inStock}
+          style={{ width:"100%", padding:isMobile?"8px 0":"9px 0", background:inStock?"#2d9e2d":"#e8e8e8", color:inStock?"#fff":"#aaa", border:"none", borderRadius:8, fontSize:12, fontWeight:700, cursor:inStock?"pointer":"not-allowed", display:"flex", alignItems:"center", justifyContent:"center", gap:5, transition:"background 0.2s", marginTop:4 }}
           onMouseEnter={e=>{ if(inStock) e.currentTarget.style.background="#218c21"; }}
           onMouseLeave={e=>{ if(inStock) e.currentTarget.style.background="#2d9e2d"; }}
         >
@@ -277,11 +301,7 @@ const ProductCard = ({ product, view = "grid", isMobile = false, onUnwish }) => 
 
 // ─── Active Filter Chip ───────────────────────────────────────────────────────
 const FilterChip = ({ label, onRemove }) => (
-  <span style={{
-    display:"inline-flex", alignItems:"center", gap:5, padding:"4px 10px",
-    background:"#e8f5e9", border:"1px solid #c8e6c9", borderRadius:20,
-    fontSize:12, fontWeight:600, color:"#2d9e2d", whiteSpace:"nowrap",
-  }}>
+  <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 10px", background:"#e8f5e9", border:"1px solid #c8e6c9", borderRadius:20, fontSize:12, fontWeight:600, color:"#2d9e2d", whiteSpace:"nowrap" }}>
     {label}
     <button onClick={onRemove} style={{ background:"none", border:"none", cursor:"pointer", padding:0, display:"flex", lineHeight:1 }}>
       <XIcon size={12} stroke="#2d9e2d"/>
@@ -328,43 +348,23 @@ const CategoryRowHeader = ({ name, totalCount, onViewAll }) => (
       <span style={{ fontSize:12, color:"#aaa", background:"#f5f5f5", borderRadius:10, padding:"2px 8px" }}>{totalCount}</span>
     </div>
     {totalCount > 2 && (
-      <button onClick={onViewAll} style={{
-        fontSize:12, fontWeight:700, color:"#2d9e2d", background:"#f0faf0",
-        border:"1px solid #c8e6c9", borderRadius:8, padding:"5px 12px",
-        cursor:"pointer", fontFamily:"inherit",
-      }}>View all →</button>
+      <button onClick={onViewAll} style={{ fontSize:12, fontWeight:700, color:"#2d9e2d", background:"#f0faf0", border:"1px solid #c8e6c9", borderRadius:8, padding:"5px 12px", cursor:"pointer", fontFamily:"inherit" }}>View all →</button>
     )}
   </div>
 );
 
 // ─── Location Banner ──────────────────────────────────────────────────────────
-// Shows when user comes from LocationSearch
 const LocationBanner = ({ locationTypeParam, locationQParam, catNameParam, onClear }) => {
   if (!locationTypeParam || !locationQParam) return null;
-  const typeLabel = { district: "District", pincode: "Pincode", address: "Area" }[locationTypeParam] || "";
+  const typeLabel = { district:"District", pincode:"Pincode", address:"Area" }[locationTypeParam] || "";
   return (
-    <div style={{
-      display:"flex", alignItems:"center", gap:10, flexWrap:"wrap",
-      background:"linear-gradient(135deg,#f0fdf4,#dcfce7)",
-      border:"1.5px solid #bbf7d0", borderRadius:12,
-      padding:"10px 14px", marginBottom:16,
-    }}>
+    <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap", background:"linear-gradient(135deg,#f0fdf4,#dcfce7)", border:"1.5px solid #bbf7d0", borderRadius:12, padding:"10px 14px", marginBottom:16 }}>
       <LocationPinIcon size={15} stroke="#16a34a"/>
       <span style={{ fontSize:13, fontWeight:700, color:"#14532d" }}>
         {typeLabel}: <span style={{ color:"#16a34a" }}>{locationQParam}</span>
-        {catNameParam && (
-          <> &nbsp;›&nbsp; <span style={{ color:"#16a34a" }}>{catNameParam}</span></>
-        )}
+        {catNameParam && <> &nbsp;›&nbsp; <span style={{ color:"#16a34a" }}>{catNameParam}</span></>}
       </span>
-      <button
-        onClick={onClear}
-        style={{
-          marginLeft:"auto", fontSize:11, fontWeight:700,
-          color:"#16a34a", background:"#fff",
-          border:"1px solid #bbf7d0", borderRadius:8,
-          padding:"4px 10px", cursor:"pointer",
-        }}
-      >
+      <button onClick={onClear} style={{ marginLeft:"auto", fontSize:11, fontWeight:700, color:"#16a34a", background:"#fff", border:"1px solid #bbf7d0", borderRadius:8, padding:"4px 10px", cursor:"pointer" }}>
         ✕ Clear location
       </button>
     </div>
@@ -375,6 +375,8 @@ const LocationBanner = ({ locationTypeParam, locationQParam, catNameParam, onCle
 const FilterPanel = ({
   isMobile, open, onClose,
   categories, catLoading, catCounts, selectedCats, toggleCat,
+  // NEW district props
+  allDistricts, districtCounts, selectedDistricts, toggleDistrict,
   minDiscount, setMinDiscount,
   inStockOnly, setInStockOnly,
   onSaleOnly, setOnSaleOnly,
@@ -400,7 +402,7 @@ const FilterPanel = ({
         </div>
       </div>
 
-      {/* Categories */}
+      {/* ── Categories ── */}
       <FilterSection title="Categories" icon={<PackageIcon size={13} stroke="#2d9e2d"/>}>
         {catLoading ? (
           [...Array(5)].map((_,i) => <div key={i} style={{ height:24, background:"#f0f0f0", borderRadius:4, marginBottom:6, animation:"shimmer 1.4s ease-in-out infinite" }}/>)
@@ -416,7 +418,22 @@ const FilterPanel = ({
         )}
       </FilterSection>
 
-      {/* Discount */}
+      {/* ── NEW: District Filter ── */}
+      <FilterSection
+        title="District"
+        icon={<DistrictIcon size={13} stroke="#16a34a"/>}
+        defaultOpen={false}
+      >
+        <DistrictFilterSection
+          districts={allDistricts}
+          districtCounts={districtCounts}
+          selectedDistricts={selectedDistricts}
+          toggleDistrict={toggleDistrict}
+          isMobile={isMobile}
+        />
+      </FilterSection>
+
+      {/* ── Discount ── */}
       <FilterSection title="Discount" icon={<TagIcon size={13} stroke="#ff6b35"/>}>
         <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
           {DISCOUNT_OPTIONS.map(opt => (
@@ -434,7 +451,7 @@ const FilterPanel = ({
         </div>
       </FilterSection>
 
-      {/* Availability */}
+      {/* ── Availability ── */}
       <FilterSection title="Availability" icon={<PackageIcon size={13} stroke="#2d9e2d"/>}>
         <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
           <CheckRow label="In Stock Only" checked={inStockOnly} onChange={()=>{setInStockOnly(v=>!v);resetPage();}}/>
@@ -443,11 +460,7 @@ const FilterPanel = ({
       </FilterSection>
 
       {isMobile && (
-        <button onClick={onClose} style={{
-          width:"100%", padding:"13px 0", background:"#2d9e2d", color:"#fff",
-          border:"none", borderRadius:12, fontSize:14, fontWeight:800,
-          cursor:"pointer", fontFamily:"inherit", marginTop:8,
-        }}>
+        <button onClick={onClose} style={{ width:"100%", padding:"13px 0", background:"#2d9e2d", color:"#fff", border:"none", borderRadius:12, fontSize:14, fontWeight:800, cursor:"pointer", fontFamily:"inherit", marginTop:8 }}>
           Show Results
         </button>
       )}
@@ -457,19 +470,8 @@ const FilterPanel = ({
   if (isMobile) {
     return (
       <>
-        <div onClick={onClose} style={{
-          position:"fixed", inset:0, background:"rgba(0,0,0,0.45)", zIndex:998,
-          opacity:open?1:0, pointerEvents:open?"auto":"none", transition:"opacity 0.3s",
-        }}/>
-        <div style={{
-          position:"fixed", left:0, right:0, bottom:0, zIndex:999,
-          background:"#fff", borderRadius:"20px 20px 0 0",
-          boxShadow:"0 -8px 32px rgba(0,0,0,0.15)",
-          transform:open?"translateY(0)":"translateY(100%)",
-          transition:"transform 0.35s cubic-bezier(0.32,0.72,0,1)",
-          maxHeight:"88vh", overflowY:"auto",
-          paddingBottom:"env(safe-area-inset-bottom)",
-        }}>
+        <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.45)", zIndex:998, opacity:open?1:0, pointerEvents:open?"auto":"none", transition:"opacity 0.3s" }}/>
+        <div style={{ position:"fixed", left:0, right:0, bottom:0, zIndex:999, background:"#fff", borderRadius:"20px 20px 0 0", boxShadow:"0 -8px 32px rgba(0,0,0,0.15)", transform:open?"translateY(0)":"translateY(100%)", transition:"transform 0.35s cubic-bezier(0.32,0.72,0,1)", maxHeight:"88vh", overflowY:"auto", paddingBottom:"env(safe-area-inset-bottom)" }}>
           <div style={{ display:"flex", justifyContent:"center", padding:"12px 0 4px" }}>
             <div style={{ width:40, height:4, background:"#e0e0e0", borderRadius:2 }}/>
           </div>
@@ -481,12 +483,7 @@ const FilterPanel = ({
 
   return (
     <aside style={{ width:open?256:0, minWidth:open?256:0, overflow:"hidden", transition:"all 0.3s ease", flexShrink:0 }}>
-      <div style={{
-        background:"#fff", borderRadius:14, border:"1px solid #f0f0f0",
-        boxShadow:"0 2px 12px rgba(0,0,0,0.05)",
-        position:"sticky", top:80, width:256,
-        maxHeight:"calc(100vh - 100px)", overflowY:"auto",
-      }}>
+      <div style={{ background:"#fff", borderRadius:14, border:"1px solid #f0f0f0", boxShadow:"0 2px 12px rgba(0,0,0,0.05)", position:"sticky", top:80, width:256, maxHeight:"calc(100vh - 100px)", overflowY:"auto" }}>
         {inner}
       </div>
     </aside>
@@ -511,22 +508,25 @@ export default function ProductsPage() {
   const [loading, setLoading]         = useState(true);
   const [catLoading, setCatLoading]   = useState(true);
 
-  const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
+  const [searchInput, setSearchInput]   = useState(searchParams.get("search") || "");
   const [selectedCats, setSelectedCats] = useState(
     searchParams.get("categories") ? searchParams.get("categories").split(",") : []
   );
-  const [minDiscount, setMinDiscount] = useState(null);
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [onSaleOnly, setOnSaleOnly]   = useState(false);
-  const [sortBy, setSortBy]           = useState("default");
+  const [minDiscount, setMinDiscount]   = useState(null);
+  const [inStockOnly, setInStockOnly]   = useState(false);
+  const [onSaleOnly, setOnSaleOnly]     = useState(false);
+  const [sortBy, setSortBy]             = useState("default");
 
-  const [view, setView]               = useState("grid");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [drawerOpen, setDrawerOpen]   = useState(false);
+  // ── NEW: District filter state ──
+  const [selectedDistricts, setSelectedDistricts] = useState([]);
+
+  const [view, setView]                 = useState("grid");
+  const [currentPage, setCurrentPage]   = useState(1);
+  const [sidebarOpen, setSidebarOpen]   = useState(true);
+  const [drawerOpen, setDrawerOpen]     = useState(false);
   const [sortDropOpen, setSortDropOpen] = useState(false);
 
-  // ── NEW: Location params from LocationSearch ──────────────────────────────
+  // Location params
   const locationTypeParam = searchParams.get("location_type") || "";
   const locationQParam    = searchParams.get("location_q") || "";
   const catNameParam      = searchParams.get("cat_name") || "";
@@ -539,9 +539,8 @@ export default function ProductsPage() {
     setSearchParams(newParams);
     resetPage();
   };
-  // ─────────────────────────────────────────────────────────────────────────
 
-  const PER_PAGE = view === "grid" ? 20 : 15;
+  const PER_PAGE   = view === "grid" ? 20 : 15;
   const searchQuery = searchParams.get("search") || "";
 
   useEffect(() => {
@@ -554,6 +553,7 @@ export default function ProductsPage() {
     setSelectedCats(cats ? cats.split(",") : []); setCurrentPage(1);
   }, [searchParams]);
 
+  // Fetch all products
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
@@ -573,6 +573,7 @@ export default function ProductsPage() {
     fetchAll();
   }, []);
 
+  // Fetch categories
   useEffect(() => {
     fetch(`${API_BASEA}/api/Category/all`)
       .then(r => r.json())
@@ -582,6 +583,27 @@ export default function ProductsPage() {
       }).catch(() => {}).finally(() => setCatLoading(false));
   }, []);
 
+  // ── NEW: Unique districts from products ──
+  const allDistricts = [...new Set(
+    allProducts
+      .map(p => p.district?.trim())
+      .filter(Boolean)
+  )].sort();
+
+  // District counts
+  const districtCounts = allDistricts.reduce((acc, dist) => {
+    acc[dist] = allProducts.filter(p => p.district?.trim() === dist).length;
+    return acc;
+  }, {});
+
+  // Toggle district
+  const toggleDistrict = (dist) => {
+    setSelectedDistricts(s =>
+      s.includes(dist) ? s.filter(x => x !== dist) : [...s, dist]
+    );
+    resetPage();
+  };
+
   const catCounts = categories.reduce((acc, cat) => {
     acc[cat.id] = allProducts.filter(p =>
       String(p.category_id || p.category?.id || "") === String(cat.id)
@@ -589,10 +611,10 @@ export default function ProductsPage() {
     return acc;
   }, {});
 
-  // ── UPDATED: isDefaultView mein location params bhi check karo ──
   const isDefaultView = !searchQuery && selectedCats.length === 0
     && minDiscount === null && !inStockOnly && !onSaleOnly && sortBy === "default"
-    && !locationTypeParam && !catNameParam;
+    && !locationTypeParam && !catNameParam
+    && selectedDistricts.length === 0; // NEW
 
   const defaultViewGroups = !loading && isDefaultView
     ? categories.filter(cat => (catCounts[cat.id] || 0) > 0).map(cat => {
@@ -603,7 +625,7 @@ export default function ProductsPage() {
       })
     : [];
 
-  // ── UPDATED: filtered mein location + cat_name logic add kiya ──
+  // Filter logic
   const filtered = allProducts.filter(p => {
     const price    = Number(p.sellingPrice || 0);
     const oldPrice = Number(p.buyingPrice || 0);
@@ -618,46 +640,44 @@ export default function ProductsPage() {
     if (inStockOnly && !inStock) return false;
     if (onSaleOnly && !oldPrice) return false;
 
-    // ── Location filter ──
+    // Location filter
     if (locationTypeParam && locationQParam) {
       const q = locationQParam.toLowerCase().trim();
       if (locationTypeParam === "district" && !p.district?.toLowerCase().includes(q)) return false;
       if (locationTypeParam === "pincode"  && p.pincode?.toString() !== q) return false;
-      if (locationTypeParam === "address"  && !(
-        p.address?.toLowerCase().includes(q) ||
-        p.village?.toLowerCase().includes(q)
-      )) return false;
+      if (locationTypeParam === "address"  && !(p.address?.toLowerCase().includes(q) || p.village?.toLowerCase().includes(q))) return false;
     }
 
-    // ── Category name filter (LocationSearch se aaya) ──
+    // Cat name filter
     if (catNameParam) {
       const pCatName = p.category_name || p.category?.name || "";
       if (pCatName.toLowerCase() !== catNameParam.toLowerCase()) return false;
     }
 
+    // ── NEW: District filter ──
+    if (selectedDistricts.length > 0 && !selectedDistricts.includes(p.district?.trim())) return false;
+
     return true;
   });
 
   const sorted = [...filtered].sort((a, b) => {
-    const pa = Number(a.sellingPrice || 0);
-    const pb = Number(b.sellingPrice || 0);
-    const oa = Number(a.buyingPrice || 0);
-    const ob = Number(b.buyingPrice || 0);
-    const da = oa && oa > pa ? Math.round((1 - pa / oa) * 100) : 0;
-    const db = ob && ob > pb ? Math.round((1 - pb / ob) * 100) : 0;
+    const pa = Number(a.sellingPrice || 0), pb = Number(b.sellingPrice || 0);
+    const oa = Number(a.buyingPrice || 0),  ob = Number(b.buyingPrice || 0);
+    const da = oa && oa > pa ? Math.round((1-pa/oa)*100) : 0;
+    const db = ob && ob > pb ? Math.round((1-pb/ob)*100) : 0;
     switch (sortBy) {
       case "price-asc":  return pa - pb;
       case "price-desc": return pb - pa;
-      case "rating":     return (b.rating || 4) - (a.rating || 4);
+      case "rating":     return (b.rating||4) - (a.rating||4);
       case "discount":   return db - da;
-      case "name-asc":   return (a.name || "").localeCompare(b.name || "");
-      case "name-desc":  return (b.name || "").localeCompare(a.name || "");
+      case "name-asc":   return (a.name||"").localeCompare(b.name||"");
+      case "name-desc":  return (b.name||"").localeCompare(a.name||"");
       default: return 0;
     }
   });
 
   const totalPages = Math.ceil(sorted.length / PER_PAGE);
-  const paginated  = sorted.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+  const paginated  = sorted.slice((currentPage-1)*PER_PAGE, currentPage*PER_PAGE);
   const resetPage  = () => setCurrentPage(1);
 
   const activeFilters = [
@@ -665,6 +685,12 @@ export default function ProductsPage() {
       const cat = categories.find(c => String(c.id) === String(id));
       return cat ? { key:`cat-${id}`, label:cat.name, remove:()=>{setSelectedCats(s=>s.filter(x=>x!==id));resetPage();} } : null;
     }).filter(Boolean),
+    // ── NEW: District chips ──
+    ...selectedDistricts.map(dist => ({
+      key: `dist-${dist}`,
+      label: `📍 ${dist}`,
+      remove: () => { setSelectedDistricts(s => s.filter(x => x !== dist)); resetPage(); },
+    })),
     minDiscount ? { key:"discount", label:`${minDiscount}%+ off`, remove:()=>{setMinDiscount(null);resetPage();} } : null,
     inStockOnly ? { key:"stock",    label:"In Stock",             remove:()=>{setInStockOnly(false);resetPage();} } : null,
     onSaleOnly  ? { key:"sale",     label:"On Sale",              remove:()=>{setOnSaleOnly(false);resetPage();}  } : null,
@@ -673,7 +699,9 @@ export default function ProductsPage() {
   const clearAllFilters = () => {
     setSelectedCats([]); setMinDiscount(null);
     setInStockOnly(false); setOnSaleOnly(false);
-    setSortBy("default"); setSearchParams({}); resetPage();
+    setSortBy("default"); setSearchParams({});
+    setSelectedDistricts([]); // NEW
+    resetPage();
   };
 
   const handleSearchSubmit = (e) => {
@@ -685,7 +713,7 @@ export default function ProductsPage() {
 
   const toggleCat = (id) => {
     const sid = String(id);
-    setSelectedCats(s => s.includes(sid) ? s.filter(x => x !== sid) : [...s, sid]);
+    setSelectedCats(s => s.includes(sid) ? s.filter(x => x!==sid) : [...s, sid]);
     resetPage();
   };
 
@@ -695,13 +723,15 @@ export default function ProductsPage() {
 
   const pageRange = () => {
     const pages = []; const delta = isMobile ? 1 : 2;
-    for (let i = Math.max(1, currentPage - delta); i <= Math.min(totalPages, currentPage + delta); i++) pages.push(i);
+    for (let i=Math.max(1,currentPage-delta); i<=Math.min(totalPages,currentPage+delta); i++) pages.push(i);
     return pages;
   };
 
   const filterPanelProps = {
     isMobile, open:isMobile?drawerOpen:sidebarOpen, onClose:()=>setDrawerOpen(false),
     categories, catLoading, catCounts, selectedCats, toggleCat,
+    // NEW
+    allDistricts, districtCounts, selectedDistricts, toggleDistrict,
     minDiscount, setMinDiscount,
     inStockOnly, setInStockOnly,
     onSaleOnly, setOnSaleOnly,
@@ -714,12 +744,13 @@ export default function ProductsPage() {
       ? "repeat(auto-fill, minmax(200px,1fr))"
       : "repeat(auto-fill, minmax(220px,1fr))";
 
-  // ── Page title logic ──
   const pageTitle = searchQuery
     ? `Results for "${searchQuery}"`
     : catNameParam
       ? catNameParam
-      : "All Products";
+      : selectedDistricts.length === 1
+        ? `📍 ${selectedDistricts[0]}`
+        : "All Products";
 
   return (
     <>
@@ -729,19 +760,11 @@ export default function ProductsPage() {
         body { font-family:'Nunito',sans-serif; background:#f8f9fa; margin:0; }
         @keyframes fadeIn  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
         @keyframes shimmer { 0%,100%{opacity:1} 50%{opacity:0.5} }
-        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none}
         ::-webkit-scrollbar{width:5px}
         ::-webkit-scrollbar-track{background:#f1f1f1}
         ::-webkit-scrollbar-thumb{background:#ccc;border-radius:10px}
-        .mobile-search-bar {
-          position:sticky; top:0; background:#fff;
-          padding:10px 14px 8px; border-bottom:1px solid #f0f0f0;
-          box-shadow:0 2px 8px rgba(0,0,0,0.06);
-        }
-        .filter-chips-scroll {
-          display:flex; gap:8px; overflow-x:auto; padding-bottom:2px;
-          -webkit-overflow-scrolling:touch; scrollbar-width:none;
-        }
+        .mobile-search-bar { position:sticky; top:0; background:#fff; padding:10px 14px 8px; border-bottom:1px solid #f0f0f0; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+        .filter-chips-scroll { display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
         .filter-chips-scroll::-webkit-scrollbar { display:none; }
       `}</style>
 
@@ -751,32 +774,21 @@ export default function ProductsPage() {
         {isMobile ? (
           <div className="mobile-search-bar" style={{ zIndex:drawerOpen?10:90 }}>
             <form onSubmit={handleSearchSubmit} style={{ display:"flex", gap:0, marginBottom:8 }}>
-              <input value={searchInput} onChange={e=>setSearchInput(e.target.value)}
-                placeholder="Search products…"
+              <input value={searchInput} onChange={e=>setSearchInput(e.target.value)} placeholder="Search products…"
                 style={{ flex:1, padding:"10px 14px", fontSize:14, border:"1.5px solid #e0e0e0", borderRight:"none", borderRadius:"10px 0 0 10px", outline:"none", background:"#f8f9fa", fontFamily:"inherit", color:"#1a1a1a" }}
-                onFocus={e=>e.target.style.borderColor="#2d9e2d"}
-                onBlur={e=>e.target.style.borderColor="#e0e0e0"}
+                onFocus={e=>e.target.style.borderColor="#2d9e2d"} onBlur={e=>e.target.style.borderColor="#e0e0e0"}
               />
               <button type="submit" style={{ padding:"10px 14px", background:"#2d9e2d", border:"none", borderRadius:"0 10px 10px 0", cursor:"pointer", display:"flex", alignItems:"center" }}>
                 <SearchIcon size={18} stroke="#fff"/>
               </button>
             </form>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <button onClick={()=>setDrawerOpen(true)} style={{
-                display:"flex", alignItems:"center", gap:5, padding:"7px 12px",
-                background:activeFilters.length?"#2d9e2d":"#f5f5f5",
-                color:activeFilters.length?"#fff":"#555",
-                border:"none", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:700, fontFamily:"inherit", flexShrink:0,
-              }}>
+              <button onClick={()=>setDrawerOpen(true)} style={{ display:"flex", alignItems:"center", gap:5, padding:"7px 12px", background:activeFilters.length?"#2d9e2d":"#f5f5f5", color:activeFilters.length?"#fff":"#555", border:"none", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:700, fontFamily:"inherit", flexShrink:0 }}>
                 <FilterIcon size={14} stroke={activeFilters.length?"#fff":"#555"}/>
                 Filters {activeFilters.length > 0 && `(${activeFilters.length})`}
               </button>
               <div style={{ position:"relative", flex:1 }}>
-                <button onClick={()=>setSortDropOpen(o=>!o)} style={{
-                  width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:4,
-                  padding:"7px 12px", background:"#f5f5f5", border:"none",
-                  borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:600, color:"#444", fontFamily:"inherit",
-                }}>
+                <button onClick={()=>setSortDropOpen(o=>!o)} style={{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:4, padding:"7px 12px", background:"#f5f5f5", border:"none", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:600, color:"#444", fontFamily:"inherit" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:5 }}>
                     <SortIcon size={13}/>
                     <span style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:100 }}>
@@ -790,13 +802,9 @@ export default function ProductsPage() {
                     <div style={{ position:"fixed", inset:0, zIndex:10 }} onClick={()=>setSortDropOpen(false)}/>
                     <div style={{ position:"absolute", top:"calc(100% + 6px)", right:0, left:0, zIndex:20, background:"#fff", border:"1px solid #f0f0f0", borderRadius:10, boxShadow:"0 8px 30px rgba(0,0,0,0.15)", overflow:"hidden" }}>
                       {SORT_OPTIONS.map(opt=>(
-                        <button key={opt.value} onClick={()=>{setSortBy(opt.value);setSortDropOpen(false);resetPage();}} style={{
-                          display:"block", width:"100%", textAlign:"left", padding:"11px 14px",
-                          fontSize:14, background:sortBy===opt.value?"#f0faf0":"#fff",
-                          color:sortBy===opt.value?"#2d9e2d":"#333",
-                          fontWeight:sortBy===opt.value?700:400,
-                          border:"none", cursor:"pointer", fontFamily:"inherit",
-                        }}>{opt.label}</button>
+                        <button key={opt.value} onClick={()=>{setSortBy(opt.value);setSortDropOpen(false);resetPage();}} style={{ display:"block", width:"100%", textAlign:"left", padding:"11px 14px", fontSize:14, background:sortBy===opt.value?"#f0faf0":"#fff", color:sortBy===opt.value?"#2d9e2d":"#333", fontWeight:sortBy===opt.value?700:400, border:"none", cursor:"pointer", fontFamily:"inherit" }}>
+                          {opt.label}
+                        </button>
                       ))}
                     </div>
                   </>
@@ -812,9 +820,7 @@ export default function ProductsPage() {
               <div className="filter-chips-scroll" style={{ marginTop:8 }}>
                 {searchQuery && <FilterChip label={`"${searchQuery}"`} onRemove={()=>{setSearchParams({});setSearchInput("");resetPage();}}/>}
                 {activeFilters.map(f=><FilterChip key={f.key} label={f.label} onRemove={f.remove}/>)}
-                <button onClick={clearAllFilters} style={{ fontSize:12, color:"#e74c3c", background:"none", border:"1px solid #fdd", borderRadius:20, padding:"4px 10px", cursor:"pointer", fontWeight:600, whiteSpace:"nowrap", fontFamily:"inherit" }}>
-                  Clear all
-                </button>
+                <button onClick={clearAllFilters} style={{ fontSize:12, color:"#e74c3c", background:"none", border:"1px solid #fdd", borderRadius:20, padding:"4px 10px", cursor:"pointer", fontWeight:600, whiteSpace:"nowrap", fontFamily:"inherit" }}>Clear all</button>
               </div>
             )}
           </div>
@@ -822,29 +828,21 @@ export default function ProductsPage() {
           <>
             <div style={{ marginBottom:20, display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
               <div>
-                <h1 style={{ fontSize:26, fontWeight:900, color:"#1a1a1a", margin:0, letterSpacing:-0.5 }}>
-                  {pageTitle}
-                </h1>
+                <h1 style={{ fontSize:26, fontWeight:900, color:"#1a1a1a", margin:0, letterSpacing:-0.5 }}>{pageTitle}</h1>
                 <p style={{ fontSize:13, color:"#888", margin:"4px 0 0", display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
                   {loading ? "Loading products…"
                     : isDefaultView
                       ? `${allProducts.length.toLocaleString()} products across ${defaultViewGroups.length} categories`
                       : `${sorted.length.toLocaleString()} products found`}
                   {locationQParam && !loading && (
-                    <span style={{
-                      display:"inline-flex", alignItems:"center", gap:4,
-                      background:"#f0fdf4", border:"1px solid #bbf7d0",
-                      borderRadius:20, padding:"2px 8px",
-                      fontSize:11, fontWeight:700, color:"#15803d",
-                    }}>
+                    <span style={{ display:"inline-flex", alignItems:"center", gap:4, background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:20, padding:"2px 8px", fontSize:11, fontWeight:700, color:"#15803d" }}>
                       📍 {locationQParam}
                     </span>
                   )}
                 </p>
               </div>
               <form onSubmit={handleSearchSubmit} style={{ display:"flex", alignItems:"center" }}>
-                <input value={searchInput} onChange={e=>setSearchInput(e.target.value)}
-                  placeholder="Search products…"
+                <input value={searchInput} onChange={e=>setSearchInput(e.target.value)} placeholder="Search products…"
                   style={{ width:260, padding:"9px 14px", fontSize:13, border:"1.5px solid #e0e0e0", borderRight:"none", borderRadius:"8px 0 0 8px", outline:"none", background:"#fff", fontFamily:"inherit", color:"#1a1a1a" }}
                   onFocus={e=>e.target.style.borderColor="#2d9e2d"} onBlur={e=>e.target.style.borderColor="#e0e0e0"}
                 />
@@ -854,22 +852,14 @@ export default function ProductsPage() {
               </form>
             </div>
 
-            {/* ── Location Banner ── */}
-            <LocationBanner
-              locationTypeParam={locationTypeParam}
-              locationQParam={locationQParam}
-              catNameParam={catNameParam}
-              onClear={clearLocationFilter}
-            />
+            <LocationBanner locationTypeParam={locationTypeParam} locationQParam={locationQParam} catNameParam={catNameParam} onClear={clearLocationFilter}/>
 
             {(activeFilters.length > 0 || searchQuery) && (
               <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:16, alignItems:"center" }}>
                 <span style={{ fontSize:12, color:"#888", fontWeight:600 }}>Active filters:</span>
                 {searchQuery && <FilterChip label={`"${searchQuery}"`} onRemove={()=>{setSearchParams({});setSearchInput("");resetPage();}}/>}
                 {activeFilters.map(f=><FilterChip key={f.key} label={f.label} onRemove={f.remove}/>)}
-                <button onClick={clearAllFilters} style={{ fontSize:12, color:"#e74c3c", background:"none", border:"none", cursor:"pointer", fontWeight:600, textDecoration:"underline", fontFamily:"inherit" }}>
-                  Clear all
-                </button>
+                <button onClick={clearAllFilters} style={{ fontSize:12, color:"#e74c3c", background:"none", border:"none", cursor:"pointer", fontWeight:600, textDecoration:"underline", fontFamily:"inherit" }}>Clear all</button>
               </div>
             )}
           </>
@@ -877,7 +867,6 @@ export default function ProductsPage() {
 
         {/* ── Main layout ── */}
         <div style={{ display:"flex", gap:isMobile?0:20, alignItems:"flex-start", padding:isMobile?"12px 12px 0":0 }}>
-
           <FilterPanel {...filterPanelProps}/>
 
           <div style={{ flex:1, minWidth:0 }}>
@@ -888,11 +877,7 @@ export default function ProductsPage() {
                   <FilterIcon size={13} stroke="#555"/> {sidebarOpen?"Hide":"Filters"}
                 </button>
                 <div style={{ flex:1 }}/>
-                {!isDefaultView && (
-                  <span style={{ fontSize:12, color:"#aaa", whiteSpace:"nowrap" }}>
-                    {loading?"…":`${(currentPage-1)*PER_PAGE+1}–${Math.min(currentPage*PER_PAGE,sorted.length)} of ${sorted.length}`}
-                  </span>
-                )}
+                {!isDefaultView && <span style={{ fontSize:12, color:"#aaa", whiteSpace:"nowrap" }}>{loading?"…":`${(currentPage-1)*PER_PAGE+1}–${Math.min(currentPage*PER_PAGE,sorted.length)} of ${sorted.length}`}</span>}
                 {!isDefaultView && (
                   <div style={{ position:"relative" }}>
                     <button onClick={()=>setSortDropOpen(o=>!o)} style={{ display:"flex", alignItems:"center", gap:6, padding:"7px 12px", background:"#fff", border:"1.5px solid #e8e8e8", borderRadius:8, cursor:"pointer", fontSize:12, fontWeight:600, color:"#444", fontFamily:"inherit", whiteSpace:"nowrap" }}>
@@ -903,7 +888,8 @@ export default function ProductsPage() {
                         <div style={{ position:"fixed", inset:0, zIndex:10 }} onClick={()=>setSortDropOpen(false)}/>
                         <div style={{ position:"absolute", top:"calc(100% + 6px)", right:0, zIndex:20, background:"#fff", border:"1px solid #f0f0f0", borderRadius:10, boxShadow:"0 8px 30px rgba(0,0,0,0.12)", minWidth:200, overflow:"hidden" }}>
                           {SORT_OPTIONS.map(opt=>(
-                            <button key={opt.value} onClick={()=>{setSortBy(opt.value);setSortDropOpen(false);resetPage();}} style={{ display:"block", width:"100%", textAlign:"left", padding:"9px 14px", fontSize:13, background:sortBy===opt.value?"#f0faf0":"#fff", color:sortBy===opt.value?"#2d9e2d":"#333", fontWeight:sortBy===opt.value?700:400, border:"none", cursor:"pointer", fontFamily:"inherit" }}
+                            <button key={opt.value} onClick={()=>{setSortBy(opt.value);setSortDropOpen(false);resetPage();}}
+                              style={{ display:"block", width:"100%", textAlign:"left", padding:"9px 14px", fontSize:13, background:sortBy===opt.value?"#f0faf0":"#fff", color:sortBy===opt.value?"#2d9e2d":"#333", fontWeight:sortBy===opt.value?700:400, border:"none", cursor:"pointer", fontFamily:"inherit" }}
                               onMouseEnter={e=>{if(sortBy!==opt.value)e.target.style.background="#f8f8f8";}}
                               onMouseLeave={e=>{e.target.style.background=sortBy===opt.value?"#f0faf0":"#fff";}}
                             >{opt.label}</button>
@@ -923,27 +909,15 @@ export default function ProductsPage() {
 
             {isMobile && (
               <div style={{ marginBottom:12 }}>
-                <h1 style={{ fontSize:20, fontWeight:900, color:"#1a1a1a", margin:"0 0 2px", letterSpacing:-0.3 }}>
-                  {pageTitle}
-                </h1>
+                <h1 style={{ fontSize:20, fontWeight:900, color:"#1a1a1a", margin:"0 0 2px", letterSpacing:-0.3 }}>{pageTitle}</h1>
                 <p style={{ fontSize:12, color:"#888", margin:0 }}>
                   {loading?"Loading…":isDefaultView?`${allProducts.length.toLocaleString()} products`:`${sorted.length.toLocaleString()} found`}
                 </p>
-                {/* Mobile location banner */}
                 {locationQParam && (
-                  <div style={{
-                    display:"flex", alignItems:"center", gap:6,
-                    background:"#f0fdf4", border:"1px solid #bbf7d0",
-                    borderRadius:8, padding:"6px 10px", marginTop:8,
-                  }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:6, background:"#f0fdf4", border:"1px solid #bbf7d0", borderRadius:8, padding:"6px 10px", marginTop:8 }}>
                     <LocationPinIcon size={12} stroke="#16a34a"/>
-                    <span style={{ fontSize:11, fontWeight:700, color:"#15803d", flex:1 }}>
-                      {locationQParam}{catNameParam && ` › ${catNameParam}`}
-                    </span>
-                    <button onClick={clearLocationFilter} style={{
-                      background:"none", border:"none", cursor:"pointer",
-                      fontSize:14, color:"#16a34a", padding:0, lineHeight:1,
-                    }}>✕</button>
+                    <span style={{ fontSize:11, fontWeight:700, color:"#15803d", flex:1 }}>{locationQParam}{catNameParam && ` › ${catNameParam}`}</span>
+                    <button onClick={clearLocationFilter} style={{ background:"none", border:"none", cursor:"pointer", fontSize:14, color:"#16a34a", padding:0, lineHeight:1 }}>✕</button>
                   </div>
                 )}
               </div>
@@ -976,9 +950,7 @@ export default function ProductsPage() {
                 <div style={{ fontSize:48, marginBottom:12 }}>🔍</div>
                 <h3 style={{ fontSize:18, fontWeight:800, color:"#1a1a1a", margin:"0 0 6px" }}>No products found</h3>
                 <p style={{ fontSize:13, color:"#aaa", margin:"0 0 16px" }}>Try adjusting your filters</p>
-                <button onClick={clearAllFilters} style={{ padding:"10px 24px", background:"#2d9e2d", color:"#fff", border:"none", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
-                  Clear All Filters
-                </button>
+                <button onClick={clearAllFilters} style={{ padding:"10px 24px", background:"#2d9e2d", color:"#fff", border:"none", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Clear All Filters</button>
               </div>
             ) : (
               <div style={{ display:"grid", gridTemplateColumns:view==="list"?"1fr":gridCols, gap:isMobile?10:14 }}>
@@ -993,28 +965,23 @@ export default function ProductsPage() {
                   style={{ padding:isMobile?"7px 11px":"7px 14px", border:"1.5px solid #e0e0e0", borderRadius:8, background:"#fff", cursor:currentPage===1?"not-allowed":"pointer", fontSize:12, fontWeight:600, color:currentPage===1?"#ccc":"#444", fontFamily:"inherit" }}>
                   ← {!isMobile && "Prev"}
                 </button>
-
                 {currentPage > 3 && <>
                   <button onClick={()=>setCurrentPage(1)} style={paginBtnStyle(false,isMobile)}>1</button>
                   {currentPage > 4 && <span style={{ color:"#bbb" }}>…</span>}
                 </>}
-
                 {pageRange().map(n=>(
                   <button key={n} onClick={()=>setCurrentPage(n)} style={paginBtnStyle(n===currentPage,isMobile)}>{n}</button>
                 ))}
-
                 {currentPage < totalPages - 2 && <>
                   {currentPage < totalPages - 3 && <span style={{ color:"#bbb" }}>…</span>}
                   <button onClick={()=>setCurrentPage(totalPages)} style={paginBtnStyle(totalPages===currentPage,isMobile)}>{totalPages}</button>
                 </>}
-
                 <button onClick={()=>setCurrentPage(p=>Math.min(totalPages,p+1))} disabled={currentPage===totalPages}
                   style={{ padding:isMobile?"7px 11px":"7px 14px", border:"1.5px solid #e0e0e0", borderRadius:8, background:"#fff", cursor:currentPage===totalPages?"not-allowed":"pointer", fontSize:12, fontWeight:600, color:currentPage===totalPages?"#ccc":"#444", fontFamily:"inherit" }}>
                   {!isMobile && "Next"} →
                 </button>
               </div>
             )}
-
           </div>
         </div>
       </div>
