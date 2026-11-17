@@ -226,7 +226,7 @@ const registerSeller = async (req, res) => {
     const requiredFields = {
   fullName, email, mobile, password,
   shopName, shopCategory, shopStreet, shopCity, shopState, shopPincode,
-  panNumber, aadharNumber,
+   aadharNumber,
 };
     const missing = Object.keys(requiredFields).filter(
       (k) => !requiredFields[k] || String(requiredFields[k]).trim() === ""
@@ -262,10 +262,11 @@ const registerSeller = async (req, res) => {
     }
 
     // ── Validate PAN format (basic: 5 letters, 4 digits, 1 letter) ─
-    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
-    if (!panRegex.test(panNumber.toUpperCase())) {
-      return res.status(400).json({ message: "Invalid PAN number format" });
-    }
+    // ── Validate PAN format only if provided ───────────────────────
+const panClean = panNumber ? panNumber.toUpperCase().trim() : "";
+if (panClean && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panClean)) {
+  return res.status(400).json({ message: "Invalid PAN number format" });
+}
 
     // ── Validate Aadhar format (12 digits) ────────────────────────
     const aadharClean = aadharNumber.replace(/\s/g, "");
@@ -322,7 +323,7 @@ const registerSeller = async (req, res) => {
         shopPincode.trim(),
         parseFloat(deliveryCharge) || 0,
         shopDescription ? shopDescription.trim() : null,
-        panNumber.toUpperCase().trim(),
+        panClean || null,
         maskedAadhar,                               // store masked Aadhar
         panCardUrl,
         sameAsShopBool,

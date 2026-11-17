@@ -38,7 +38,7 @@ const createSellerTable = async (pool) => {
       shop_description    TEXT,
 
       -- KYC documents
-      pan_number          VARCHAR(12)   NOT NULL,
+      pan_number          VARCHAR(12)   NULL,
       -- Stores masked Aadhar only: "XXXX-XXXX-1234"
       aadhar_number       VARCHAR(20)   NOT NULL,
       pan_card_url        TEXT,
