@@ -37,17 +37,16 @@ const razorpay = new Razorpay({
 });
 
 // ── Nodemailer transporter ─────────────────────────────────────────
-
-// ── Nodemailer transporter ─────────────────────────────────────────
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,      // smtp.hostinger.com
-  port: parseInt(process.env.EMAIL_PORT),  // 465
-  secure: true,                      // true for port 465
+  host: process.env.EMAIL_HOST,                // smtp.hostinger.com
+  port: parseInt(process.env.EMAIL_PORT),      // 465
+  secure: true,                                // true for port 465
   auth: {
-    user: process.env.EMAIL_USER,    // support@kolkatakart.in
-    pass: process.env.EMAIL_PASS,    // Kolkatakart@04
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
+
 // ── Helpers ────────────────────────────────────────────────────────
 
 /** Generate a 6-digit OTP */
@@ -59,7 +58,7 @@ const generateOtp = () =>
  * Uses Date.now() to guarantee UTC regardless of server timezone.
  */
 const otpExpiry = () => {
-  const d = new Date(Date.now() + 10 * 60 * 1000); // UTC + 10 min
+  const d = new Date(Date.now() + 10 * 60 * 1000);
   return d.toISOString().slice(0, 19).replace("T", " ");
 };
 
@@ -73,6 +72,16 @@ const uploadToCloudinary = (fileBuffer, folder) =>
     stream.end(fileBuffer);
   });
 
+/**
+ * Decides whether the shop address should be used as pickup.
+ * Pickup counts as "provided" only when a pickup street is filled in.
+ */
+const resolveSameAsShop = (sameAsShop, pickupStreet) => {
+  const pickupProvided = !!(pickupStreet && String(pickupStreet).trim());
+  const isTrue = sameAsShop === "true" || sameAsShop === true;
+  return isTrue || !pickupProvided ? 1 : 0;
+};
+
 // ══════════════════════════════════════════════════════════════════
 // 1. SEND OTP
 // POST /api/seller/send-otp
@@ -85,14 +94,12 @@ const sendOtp = async (req, res) => {
     return res.status(400).json({ message: "Email is required" });
   }
 
-  // Basic email format validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({ message: "Invalid email format" });
   }
 
   try {
-    // Check if email is already registered
     const [rows] = await pool.execute(
       "SELECT id FROM sellers WHERE email = ?",
       [email]
@@ -101,7 +108,7 @@ const sendOtp = async (req, res) => {
       return res.status(409).json({ message: "Email already registered" });
     }
 
-    const otp      = generateOtp();
+    const otp       = generateOtp();
     const expiresAt = otpExpiry();
 
     // Invalidate any existing unused OTPs for this email
@@ -110,13 +117,12 @@ const sendOtp = async (req, res) => {
       [email]
     );
 
-    // Store the new OTP
     await pool.execute(
       "INSERT INTO email_otps (email, otp, expires_at) VALUES (?, ?, ?)",
       [email, otp, expiresAt]
     );
 
-    // Send OTP email — failure is caught and logged, but does NOT block response
+    // Email failure is logged but does NOT block the response
     try {
       const info = await transporter.sendMail({
         from: `"Maharashtra Bazaar" <${process.env.EMAIL_USER}>`,
@@ -160,7 +166,6 @@ const verifyOtp = async (req, res) => {
   }
 
   try {
-    // Find a valid, unused, non-expired OTP record
     const [rows] = await pool.execute(
       `SELECT id FROM email_otps
        WHERE email = ?
@@ -176,7 +181,6 @@ const verifyOtp = async (req, res) => {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
-    // Mark OTP as used
     await pool.execute(
       "UPDATE email_otps SET used = 1 WHERE id = ?",
       [rows[0].id]
@@ -194,7 +198,7 @@ const verifyOtp = async (req, res) => {
 // POST /api/seller/register  (multipart/form-data)
 // ══════════════════════════════════════════════════════════════════
 const registerSeller = async (req, res) => {
-    try {
+  try {
     // ── Verify Razorpay payment first ──────────────────────────────
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
@@ -210,7 +214,6 @@ const registerSeller = async (req, res) => {
     if (generated_signature !== razorpay_signature) {
       return res.status(400).json({ message: "Payment verification failed. Please contact support." });
     }
-    // ── Payment verified ✓ ─────────────────────────────────────────
 
     const {
       fullName, email, mobile, password, dob,
@@ -222,12 +225,12 @@ const registerSeller = async (req, res) => {
       termsAccepted, commissionAccepted,
     } = req.body;
 
-    // ── Validate required fields ───────────────────────────────────
+    // ── Validate required fields (PAN is optional) ─────────────────
     const requiredFields = {
-  fullName, email, mobile, password,
-  shopName, shopCategory, shopStreet, shopCity, shopState, shopPincode,
-   aadharNumber,
-};
+      fullName, email, mobile, password,
+      shopName, shopCategory, shopStreet, shopCity, shopState, shopPincode,
+      aadharNumber,
+    };
     const missing = Object.keys(requiredFields).filter(
       (k) => !requiredFields[k] || String(requiredFields[k]).trim() === ""
     );
@@ -238,7 +241,6 @@ const registerSeller = async (req, res) => {
     }
 
     // ── Check email OTP was verified ───────────────────────────────
-    // We look for a recently-used OTP record for this email.
     const [otpVerified] = await pool.execute(
       `SELECT id FROM email_otps
        WHERE email = ? AND used = 1
@@ -261,20 +263,19 @@ const registerSeller = async (req, res) => {
       return res.status(409).json({ message: "Email already registered" });
     }
 
-    // ── Validate PAN format (basic: 5 letters, 4 digits, 1 letter) ─
-    // ── Validate PAN format only if provided ───────────────────────
-const panClean = panNumber ? panNumber.toUpperCase().trim() : "";
-if (panClean && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panClean)) {
-  return res.status(400).json({ message: "Invalid PAN number format" });
-}
+    // ── Validate PAN only if provided ──────────────────────────────
+    const panClean = panNumber ? String(panNumber).toUpperCase().trim() : "";
+    if (panClean && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panClean)) {
+      return res.status(400).json({ message: "Invalid PAN number format" });
+    }
 
-    // ── Validate Aadhar format (12 digits) ────────────────────────
-    const aadharClean = aadharNumber.replace(/\s/g, "");
+    // ── Validate Aadhaar (12 digits) ───────────────────────────────
+    const aadharClean = String(aadharNumber).replace(/\s/g, "");
     if (!/^\d{12}$/.test(aadharClean)) {
       return res.status(400).json({ message: "Invalid Aadhar number. Must be 12 digits." });
     }
 
-    // ── Upload PAN card image to Cloudinary (if provided) ─────────
+    // ── Upload PAN card image (optional) ───────────────────────────
     let panCardUrl = null;
     if (req.file) {
       try {
@@ -293,22 +294,30 @@ if (panClean && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panClean)) {
     // ── Hash password ──────────────────────────────────────────────
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // ── Mask Aadhar before storing (store only last 4 digits) ──────
+    // ── Mask Aadhaar (store only last 4 digits) ────────────────────
     const maskedAadhar = "XXXX-XXXX-" + aadharClean.slice(-4);
 
-    const sameAsShopBool = sameAsShop === "true" || sameAsShop === true ? 1 : 0;
+    // ── Pickup logic ───────────────────────────────────────────────
+    const sameAsShopBool = resolveSameAsShop(sameAsShop, pickupStreet);
+
+    // If pickup is same as shop, use shop address for pickup columns.
+    // Otherwise use the pickup values (street is guaranteed to exist here).
+    const pickupStreetFinal  = sameAsShopBool ? shopStreet.trim()  : pickupStreet.trim();
+    const pickupCityFinal    = sameAsShopBool ? shopCity.trim()    : (pickupCity?.trim()    || null);
+    const pickupStateFinal   = sameAsShopBool ? shopState.trim()   : (pickupState?.trim()   || null);
+    const pickupPincodeFinal = sameAsShopBool ? shopPincode.trim() : (pickupPincode?.trim() || null);
 
     // ── Insert seller record ───────────────────────────────────────
     await pool.execute(
       `INSERT INTO sellers (
-  full_name, email, mobile, password_hash, dob,
-  shop_name, shop_category, shop_street, shop_city, shop_state, shop_pincode,
-  delivery_charge, shop_description,
-  pan_number, aadhar_number, pan_card_url,
-  same_as_shop, pickup_street, pickup_city, pickup_state, pickup_pincode,
-  working_hours_from, working_hours_to,
-  terms_accepted, commission_accepted
-) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        full_name, email, mobile, password_hash, dob,
+        shop_name, shop_category, shop_street, shop_city, shop_state, shop_pincode,
+        delivery_charge, shop_description,
+        pan_number, aadhar_number, pan_card_url,
+        same_as_shop, pickup_street, pickup_city, pickup_state, pickup_pincode,
+        working_hours_from, working_hours_to,
+        terms_accepted, commission_accepted
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         fullName.trim(),
         email.trim().toLowerCase(),
@@ -324,13 +333,13 @@ if (panClean && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panClean)) {
         parseFloat(deliveryCharge) || 0,
         shopDescription ? shopDescription.trim() : null,
         panClean || null,
-        maskedAadhar,                               // store masked Aadhar
+        maskedAadhar,
         panCardUrl,
         sameAsShopBool,
-        sameAsShopBool ? shopStreet.trim()   : (pickupStreet  ? pickupStreet.trim()  : null),
-        sameAsShopBool ? shopCity.trim()     : (pickupCity    ? pickupCity.trim()    : null),
-        sameAsShopBool ? shopState.trim()    : (pickupState   ? pickupState.trim()   : null),
-        sameAsShopBool ? shopPincode.trim()  : (pickupPincode ? pickupPincode.trim() : null),
+        pickupStreetFinal,
+        pickupCityFinal,
+        pickupStateFinal,
+        pickupPincodeFinal,
         workingHoursFrom || "09:00:00",
         workingHoursTo   || "18:00:00",
         termsAccepted      === "true" ? 1 : 0,
@@ -351,16 +360,15 @@ if (panClean && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panClean)) {
             <p>Our team will review your details and <strong>approve your account within 24–48 hours</strong>. You will receive a confirmation email once approved.</p>
             <p style="color:#9ca3af;font-size:13px">Questions? Write to us at rahul.gawali1414@gmail.com</p>
             <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0"/>
-            <p style="color:#9ca3af;font-size:12px;margin:0">© 2026 Maharashtra Bazaar,</p>
+            <p style="color:#9ca3af;font-size:12px;margin:0">© 2026 Maharashtra Bazaar</p>
           </div>
         `,
       });
     } catch (mailErr) {
-      // Registration succeeded; log but do not fail the request
       console.error("Welcome email failed:", mailErr.message);
     }
 
-        // Get the newly inserted seller id
+    // ── Issue token for the new seller ─────────────────────────────
     const [newSeller] = await pool.execute(
       "SELECT id, email, shop_name FROM sellers WHERE email = ? LIMIT 1",
       [email.trim().toLowerCase()]
@@ -412,27 +420,24 @@ const loginSeller = async (req, res) => {
 
     const seller = rows[0];
 
-    // Check if account is deactivated
     if (!seller.is_active) {
       return res.status(403).json({
         message: "Account has been deactivated. Please contact support.",
       });
     }
 
-    // // Check if account is pending approval
+    // Approval check intentionally disabled — re-enable when admin approval flow is ready
     // if (!seller.is_approved) {
     //   return res.status(403).json({
     //     message: "Your account is pending admin approval. Please wait 24–48 hours.",
     //   });
     // }
 
-    // Compare password
     const isMatch = await bcrypt.compare(password, seller.password_hash);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Sign JWT
     const token = jwt.sign(
       {
         sellerId: seller.id,
@@ -476,13 +481,12 @@ const getProfile = async (req, res) => {
          same_as_shop,
          pickup_street, pickup_city, pickup_state, pickup_pincode,
          working_hours_from, working_hours_to,
-                  is_approved, profile_pic_url, created_at
+         is_approved, profile_pic_url, created_at
        FROM sellers
        WHERE id = ?`,
       [req.sellerId]
     );
-    // Note: pan_number, aadhar_number, and pan_card_url are intentionally
-    // excluded from the profile response for security.
+    // pan_number, aadhar_number, pan_card_url are intentionally excluded.
 
     if (!rows.length) {
       return res.status(404).json({ message: "Seller not found" });
@@ -494,7 +498,6 @@ const getProfile = async (req, res) => {
     return res.status(500).json({ message: "Failed to fetch profile" });
   }
 };
-
 
 // ══════════════════════════════════════════════════════════════════
 // 6. UPDATE PROFILE  (protected)
@@ -512,7 +515,7 @@ const updateProfile = async (req, res) => {
       workingHoursFrom, workingHoursTo,
     } = req.body;
 
-    const sameAsShopBool = sameAsShop === "true" || sameAsShop === true ? 1 : 0;
+    const sameAsShopBool = resolveSameAsShop(sameAsShop, pickupStreet);
 
     await pool.execute(
       `UPDATE sellers SET
@@ -536,24 +539,24 @@ const updateProfile = async (req, res) => {
         working_hours_to   = COALESCE(?, working_hours_to)
       WHERE id = ?`,
       [
-        fullName?.trim()       || null,
-        mobile?.trim()         || null,
-        dob                    || null,
-        shopName?.trim()       || null,
-        shopCategory?.trim()   || null,
-        shopStreet?.trim()     || null,
-        shopCity?.trim()       || null,
-        shopState?.trim()      || null,
-        shopPincode?.trim()    || null,
-        deliveryCharge != null ? parseFloat(deliveryCharge) : null,
+        fullName?.trim()        || null,
+        mobile?.trim()          || null,
+        dob                     || null,
+        shopName?.trim()        || null,
+        shopCategory?.trim()    || null,
+        shopStreet?.trim()      || null,
+        shopCity?.trim()        || null,
+        shopState?.trim()       || null,
+        shopPincode?.trim()     || null,
+        deliveryCharge != null  ? parseFloat(deliveryCharge) : null,
         shopDescription?.trim() || null,
         sameAsShopBool,
-        pickupStreet?.trim()   || null,
-        pickupCity?.trim()     || null,
-        pickupState?.trim()    || null,
-        pickupPincode?.trim()  || null,
-        workingHoursFrom       || null,
-        workingHoursTo         || null,
+        pickupStreet?.trim()    || null,
+        pickupCity?.trim()      || null,
+        pickupState?.trim()     || null,
+        pickupPincode?.trim()   || null,
+        workingHoursFrom        || null,
+        workingHoursTo          || null,
         req.sellerId,
       ]
     );
@@ -599,40 +602,40 @@ const updateProfilePic = async (req, res) => {
   }
 };
 
+// ══════════════════════════════════════════════════════════════════
+// 8. GET SELLER ORDERS  (protected)
+// ══════════════════════════════════════════════════════════════════
 const getSellerOrders = async (req, res) => {
   try {
-    const sellerId = req.sellerId; // set by authSeller middleware
- 
-    // Step 1: Find all product IDs belonging to this seller
+    const sellerId = req.sellerId;
+
+    // Step 1: product IDs belonging to this seller
     const [productRows] = await pool.execute(
       `SELECT id FROM products WHERE seller_id = ?`,
       [sellerId]
     );
- 
+
     if (productRows.length === 0) {
       return res.json({ success: true, orders: [], total: 0 });
     }
- 
-    const productIds = productRows.map(p => p.id);
- 
-    // Step 2: Find order IDs that contain any of these products
+
+    const productIds = productRows.map((p) => p.id);
     const placeholders = productIds.map(() => "?").join(",");
+
+    // Step 2: order IDs containing any of these products
     const [orderIdRows] = await pool.execute(
       `SELECT DISTINCT order_id FROM order_items WHERE product_id IN (${placeholders})`,
       productIds
     );
- 
+
     if (orderIdRows.length === 0) {
       return res.json({ success: true, orders: [], total: 0 });
     }
- 
-    const orderIds = orderIdRows.map(r => r.order_id);
- 
-    // Step 3: Fetch full order details for these order IDs
-    // We use Order.findById for each, which hydrates items + statusHistory
-    // But for performance, do a batch query instead:
+
+    const orderIds = orderIdRows.map((r) => r.order_id);
     const orderPlaceholders = orderIds.map(() => "?").join(",");
- 
+
+    // Step 3: order details (delivery location only, no customer PII)
     const [rows] = await pool.execute(
       `SELECT
           o.id, o.orderNumber, o.status, o.paymentMethod, o.paymentStatus,
@@ -640,7 +643,6 @@ const getSellerOrders = async (req, res) => {
           o.couponCode, o.couponDiscount,
           o.note, o.createdAt, o.estimatedDeliveryAt,
           o.deliveredAt, o.cancelledAt,
-          -- Delivery location only (NO name, phone, email)
           o.addr_city    AS delivery_city,
           o.addr_state   AS delivery_state,
           o.addr_pincode AS delivery_pincode,
@@ -650,10 +652,9 @@ const getSellerOrders = async (req, res) => {
        ORDER BY o.createdAt DESC`,
       orderIds
     );
- 
-    // Step 4: For each order, fetch only the items that belong to THIS seller
+
+    // Step 4: items (only this seller's) and status history per order
     const ordersWithItems = await Promise.all(rows.map(async (row) => {
-      // Fetch items for this order that belong to seller's products
       const [items] = await pool.execute(
         `SELECT
             oi.id, oi.name, oi.image, oi.price, oi.quantity, oi.total, oi.unit,
@@ -663,8 +664,7 @@ const getSellerOrders = async (req, res) => {
          WHERE oi.order_id = ? AND oi.product_id IN (${placeholders})`,
         [row.id, ...productIds]
       );
- 
-      // Fetch status history
+
       const [history] = await pool.execute(
         `SELECT status, note, changedAt
          FROM order_status_history
@@ -672,26 +672,25 @@ const getSellerOrders = async (req, res) => {
          ORDER BY changedAt ASC`,
         [row.id]
       );
- 
+
       return {
-        id:            row.id,
-        orderNumber:   row.orderNumber,
-        status:        row.status,
-        paymentMethod: row.paymentMethod,
-        paymentStatus: row.paymentStatus,
-        subtotal:      row.subtotal,
-        discount:      row.discount,
-        shippingCharge: row.shippingCharge,
-        tax:           row.tax,
-        total:         row.total,
-        couponCode:    row.couponCode,
-        couponDiscount: row.couponDiscount,
-        note:          row.note,
-        createdAt:     row.createdAt,
+        id:                  row.id,
+        orderNumber:         row.orderNumber,
+        status:              row.status,
+        paymentMethod:       row.paymentMethod,
+        paymentStatus:       row.paymentStatus,
+        subtotal:            row.subtotal,
+        discount:            row.discount,
+        shippingCharge:      row.shippingCharge,
+        tax:                 row.tax,
+        total:               row.total,
+        couponCode:          row.couponCode,
+        couponDiscount:      row.couponDiscount,
+        note:                row.note,
+        createdAt:           row.createdAt,
         estimatedDeliveryAt: row.estimatedDeliveryAt,
-        deliveredAt:   row.deliveredAt,
-        cancelledAt:   row.cancelledAt,
-        // Delivery location — NO customer PII
+        deliveredAt:         row.deliveredAt,
+        cancelledAt:         row.cancelledAt,
         shippingAddress: {
           city:    row.delivery_city,
           state:   row.delivery_state,
@@ -702,29 +701,31 @@ const getSellerOrders = async (req, res) => {
         statusHistory: history,
       };
     }));
- 
+
     return res.json({
       success: true,
       orders:  ordersWithItems,
       total:   ordersWithItems.length,
     });
- 
   } catch (err) {
     console.error("[GET /api/seller/orders]", err.message);
     return res.status(500).json({ success: false, message: "Failed to fetch orders." });
   }
 };
 
+// ══════════════════════════════════════════════════════════════════
+// 9. CREATE PAYMENT ORDER  (registration fee)
+// POST /api/seller/create-order
+// ══════════════════════════════════════════════════════════════════
 const createPaymentOrder = async (req, res) => {
   try {
-    // DB se current fee fetch karo
     const [rows] = await pool.execute(
       "SELECT setting_value FROM platform_settings WHERE setting_key = 'seller_registration_fee' LIMIT 1"
     );
     const fee = rows.length ? parseFloat(rows[0].setting_value) : 499;
 
     const order = await razorpay.orders.create({
-      amount:   Math.round(fee * 100), // paise mein
+      amount:   Math.round(fee * 100), // paise
       currency: "INR",
       receipt:  `seller_reg_${Date.now()}`,
     });
@@ -738,5 +739,5 @@ const createPaymentOrder = async (req, res) => {
 module.exports = {
   sendOtp, verifyOtp, registerSeller, loginSeller,
   getProfile, updateProfile, updateProfilePic, getSellerOrders,
-  createPaymentOrder
+  createPaymentOrder,
 };
